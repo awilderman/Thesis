@@ -1,0 +1,216 @@
+# don't have full set in Emma's directory, downloaded bed files from https://github.com/asntech/dbsuper:
+
+# create bed file with all SE, include the sample origin (not currently identifed with tissue/cell name)
+
+for TISSUE in Adipose_Nuclei \
+
+Adipose_Tissue \
+
+Adrenal_Gland \
+
+Aorta \
+
+Astrocytes \
+
+Bladder \
+
+Brain_Angular_Gyrus \
+
+Brain_Anterior_Caudate \
+
+Brain_Cingulate_Gyrus \
+
+Brain_Hippocampus_Middle_150 \
+
+Brain_Hippocampus_Middle \
+
+Brain_Inferior_Temporal_Lobe \
+
+Brain_Mid_Frontal_Lobe \
+
+CD14 \
+
+CD19_Primary \
+
+CD20 \
+
+CD34_adult \
+
+CD34_fetal \
+
+CD34_Primary_RO01480 \
+
+CD34_Primary_RO01536 \
+
+CD34_Primary_RO01549 \
+
+CD3 \
+
+CD4_Memory_Primary_7pool \
+
+CD4_Memory_Primary_8pool \
+
+CD4_Naive_Primary_7pool \
+
+CD4_Naive_Primary_8pool \
+
+CD4p_CD225int_CD127p_Tmem \
+
+CD4p_CD25-_CD45RAp_Naive \
+
+CD4p_CD25-_CD45ROp_Memory \
+
+CD4p_CD25-_Il17-_PMAstim_Th \
+
+CD4p_CD25-_Il17p_PMAstim_Th17 \
+
+CD56 \
+
+CD8_Memory_7pool \
+
+CD8_Naive_7pool \
+
+CD8_Naive_8pool \
+
+CD8_primiary \
+
+Colon_Crypt_1 \
+
+Colon_Crypt_2 \
+
+Colon_Crypt_3 \
+
+DHL6 \
+
+DND41 \
+
+Duodenum_Smooth_Muscle \
+
+Esophagus \
+
+Fetal_Intestine \
+
+Fetal_Intestine_Large \
+
+Fetal_Muscle \
+
+Fetal_Thymus \
+
+Gastric \
+
+GLC16 \
+
+GM12878 \
+
+H1 \
+
+H2171 \
+
+H9 \
+
+HBL1 \
+
+HCC1954 \
+
+HCT-116 \
+
+HeLa \
+
+HepG2 \
+
+HMEC \
+
+HSMM \
+
+HSMMtube \
+
+HUVEC \
+
+IMR90 \
+
+Jurkat \
+
+K562 \
+
+Left_Ventricle \
+
+LNCaP \
+
+Lung \
+
+Ly1 \
+
+Ly3 \
+
+Ly4 \
+
+MCF-7 \
+
+MM1S \
+
+NCI-H69 \
+
+NCI-H82 \
+
+NHDF-Ad \
+
+NHEK \
+
+NHLF \
+
+Osteoblasts \
+
+Ovary \
+
+Panc1 \
+
+Pancreas \
+
+Pancreatic_islets \
+
+Psoas_Muscle \
+
+Right_Atrium \
+
+Right_Ventricle \
+
+RPMI-8402 \
+
+Sigmoid_Colon \
+
+Skeletal_Muscle \
+
+Skeletal_Muscle_Myoblast \
+
+Small_Intestine \
+
+Spleen \
+
+Stomach_Smooth_Muscle \
+
+TC32 \
+
+TC71 \
+
+Thymus \
+
+Toledo \
+
+Tonsil \
+
+u87 \
+
+VACO_400 \
+
+VACO_503 \
+
+VACO_9m;
+
+do
+
+    echo "cat $TISSUE.bed | awk '{print \$1\"\\t\"\$2\"\\t\"\$3\"\\t"$TISSUE"_\"\$4}' >> dbSuper_all_SE_labeled.bed"
+
+done 
+
+ 
+
