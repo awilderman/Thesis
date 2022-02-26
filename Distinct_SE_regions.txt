@@ -1,0 +1,650 @@
+# Number of distinct SE regions across embryonic and 1 fetal stage for CF tissue
+
+
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+
+
+# jaccard_within_stages_require_10percent.sh
+
+
+
+# Similarities within stages
+
+bedtools jaccard -a CS13-12383_CF_SuperEnhancers.bed -b CS13-12690_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12383_CF_SuperEnhancers.bed -b CS13-12829_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12383_CF_SuperEnhancers.bed -b CS13-12830_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12383_CF_SuperEnhancers.bed -b CS13-12877_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS13-12690_CF_SuperEnhancers.bed -b CS13-12829_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12690_CF_SuperEnhancers.bed -b CS13-12830_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12690_CF_SuperEnhancers.bed -b CS13-12877_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS13-12829_CF_SuperEnhancers.bed -b CS13-12830_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS13-12829_CF_SuperEnhancers.bed -b CS13-12877_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS13-12830_CF_SuperEnhancers.bed -b CS13-12877_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS14-12408_CF_SuperEnhancers.bed -b CS14-12709_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS14-12408_CF_SuperEnhancers.bed -b CS14-12913_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS14-12709_CF_SuperEnhancers.bed -b CS14-12913_CF_SuperEnhancers.bed -f 0.1
+
+
+
+
+
+bedtools jaccard -a CS15-13000_CF_SuperEnhancers.bed -b CS15-13019_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS15-13000_CF_SuperEnhancers.bed -b CS15-13128_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS15-13019_CF_SuperEnhancers.bed -b CS15-13128_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS17-12191_CF_SuperEnhancers.bed -b CS17-12331_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS17-12191_CF_SuperEnhancers.bed -b CS17-12341_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS17-12191_CF_SuperEnhancers.bed -b CS17-12611_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS17-12331_CF_SuperEnhancers.bed -b CS17-12341_CF_SuperEnhancers.bed -f 0.1
+
+bedtools jaccard -a CS17-12331_CF_SuperEnhancers.bed -b CS17-12611_CF_SuperEnhancers.bed -f 0.1
+
+
+
+bedtools jaccard -a CS17-12341_CF_SuperEnhancers.bed -b CS17-12611_CF_SuperEnhancers.bed -f 0.1
+
+
+
+# write_10percent_cutoff_beds.sh
+
+
+
+# calculate percent overlap of superenhancers 
+
+bedtools intersect -a CS13-12383_CF_SuperEnhancers.bed -b CS13-12690_CF_SuperEnhancers.bed \
+
+CS13-12829_CF_SuperEnhancers.bed \
+
+CS13-12830_CF_SuperEnhancers.bed \
+
+CS13-12877_CF_SuperEnhancers.bed \
+
+-wao > CS13_intersect_list.txt
+
+
+
+bedtools intersect -a CS13-12690_CF_SuperEnhancers.bed -b CS13-12829_CF_SuperEnhancers.bed \
+
+CS13-12830_CF_SuperEnhancers.bed \
+
+CS13-12877_CF_SuperEnhancers.bed \
+
+CS13-12383_CF_SuperEnhancers.bed\
+
+-wao >> CS13_intersect_list.txt
+
+
+
+bedtools intersect -a CS13-12829_CF_SuperEnhancers.bed -b CS13-12830_CF_SuperEnhancers.bed \
+
+CS13-12877_CF_SuperEnhancers.bed \
+
+CS13-12383_CF_SuperEnhancers.bed \
+
+CS13-12690_CF_SuperEnhancers.bed \
+
+-wao >> CS13_intersect_list.txt
+
+
+
+bedtools intersect -a CS13-12830_CF_SuperEnhancers.bed -b CS13-12877_CF_SuperEnhancers.bed \
+
+CS13-12383_CF_SuperEnhancers.bed \
+
+CS13-12690_CF_SuperEnhancers.bed \
+
+CS13-12829_CF_SuperEnhancers.bed \
+
+-wao >> CS13_intersect_list.txt
+
+
+
+bedtools intersect -a CS13-12877_CF_SuperEnhancers.bed -b CS13-12383_CF_SuperEnhancers.bed \
+
+CS13-12690_CF_SuperEnhancers.bed \
+
+CS13-12829_CF_SuperEnhancers.bed \
+
+CS13-12830_CF_SuperEnhancers.bed \
+
+-wao >> CS13_intersect_list.txt
+
+
+
+
+
+cat CS13_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS13_SE_0percent_intersect.bed
+
+
+
+cat CS13_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS13_CF_SE_intersect_report.txt
+
+
+
+cat CS13_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS13_CF_SE_100percent_intersect_list.txt
+
+cat CS13_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS13_CF_SE_10percent_intersect_list.txt 
+
+cat CS13_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS13_CF_SE_under10percent_intersect_list.txt 
+
+
+
+cat CS13_SE_0percent_intersect.bed CS13_CF_SE_100percent_intersect_list.txt CS13_CF_SE_10percent_intersect_list.txt CS13_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS13_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS13_CF_SE_distinct_list_10percent_cutoff.bed
+
+# 6391 
+
+head CS13_CF_SE_distinct_list_10percent_cutoff.bed
+
+
+
+chr1    839200    880000
+
+chr1    839200    880400
+
+chr1    839400    880000
+
+chr1    893000    976800
+
+chr1    893200    976800
+
+chr1    1039400    1120600
+
+chr1    1050000    1120600
+
+chr1    1050200    1118400
+
+chr1    1050200    1120600
+
+chr1    1165800    1182200
+
+
+
+bedtools intersect -a CS14-12408_CF_SuperEnhancers.bed -b CS14-12709_CF_SuperEnhancers.bed \
+
+CS14-12913_CF_SuperEnhancers.bed \
+
+-wao > CS14_intersect_list.txt
+
+
+
+bedtools intersect -a CS14-12709_CF_SuperEnhancers.bed -b CS14-12913_CF_SuperEnhancers.bed \
+
+CS14-12408_CF_SuperEnhancers.bed \
+
+-wao >> CS14_intersect_list.txt
+
+
+
+bedtools intersect -a CS14-12913_CF_SuperEnhancers.bed -b CS14-12408_CF_SuperEnhancers.bed \
+
+CS14-12709_CF_SuperEnhancers.bed \
+
+-wao >> CS14_intersect_list.txt
+
+
+
+cat CS14_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS14_SE_0percent_intersect.bed
+
+
+
+cat CS14_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS14_CF_SE_intersect_report.txt
+
+
+
+cat CS14_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS14_CF_SE_100percent_intersect_list.txt
+
+cat CS14_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS14_CF_SE_10percent_intersect_list.txt 
+
+cat CS14_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS14_CF_SE_under10percent_intersect_list.txt 
+
+
+
+cat CS14_SE_0percent_intersect.bed CS14_CF_SE_100percent_intersect_list.txt CS14_CF_SE_10percent_intersect_list.txt CS14_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS14_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS14_CF_SE_distinct_list_10percent_cutoff.bed
+
+# 3702 
+
+head CS14_CF_SE_distinct_list_10percent_cutoff.bed
+
+chr1    839000    1016600
+
+chr1    839000    976800
+
+chr1    839200    976800
+
+chr1    1050200    1118400
+
+chr1    1050200    1144000
+
+chr1    1050200    1144200
+
+chr1    1206200    1245200
+
+chr1    1280000    1311400
+
+chr1    1280600    1311400
+
+chr1    1282600    1311400
+
+
+
+
+
+bedtools intersect -a CS15-13000_CF_SuperEnhancers.bed -b CS15-13019_CF_SuperEnhancers.bed \
+
+CS15-13128_CF_SuperEnhancers.bed \
+
+-wao > CS15_intersect_list.txt
+
+
+
+bedtools intersect -a CS15-13019_CF_SuperEnhancers.bed -b CS15-13128_CF_SuperEnhancers.bed \
+
+CS15-13000_CF_SuperEnhancers.bed \
+
+-wao >> CS15_intersect_list.txt
+
+
+
+bedtools intersect -a CS15-13128_CF_SuperEnhancers.bed -b CS15-13000_CF_SuperEnhancers.bed \
+
+CS15-13019_CF_SuperEnhancers.bed \
+
+-wao >> CS15_intersect_list.txt
+
+
+
+cat CS15_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS15_SE_0percent_intersect.bed
+
+
+
+cat CS15_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS15_CF_SE_intersect_report.txt
+
+
+
+cat CS15_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS15_CF_SE_100percent_intersect_list.txt
+
+cat CS15_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS15_CF_SE_10percent_intersect_list.txt 
+
+cat CS15_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS15_CF_SE_under10percent_intersect_list.txt 
+
+
+
+cat CS15_SE_0percent_intersect.bed CS15_CF_SE_100percent_intersect_list.txt CS15_CF_SE_10percent_intersect_list.txt CS15_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS15_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS15_CF_SE_distinct_list_10percent_cutoff.bed
+
+# 4493 
+
+head CS15_CF_SE_distinct_list_10percent_cutoff.bed
+
+chr1    839000    976800
+
+chr1    839200    880400
+
+chr1    893000    976800
+
+chr1    1050000    1118400
+
+chr1    1050200    1123400
+
+chr1    1050200    1149000
+
+chr1    1279600    1311400
+
+chr1    1282600    1311400
+
+chr1    1282600    1311600
+
+chr1    1333000    1376600
+
+
+
+
+
+bedtools intersect -a CS17-12191_CF_SuperEnhancers.bed -b CS17-12331_CF_SuperEnhancers.bed \
+
+CS17-12341_CF_SuperEnhancers.bed \
+
+CS17-12611_CF_SuperEnhancers.bed \
+
+-wao > CS17_intersect_list.txt
+
+
+
+bedtools intersect -a CS17-12331_CF_SuperEnhancers.bed -b CS17-12341_CF_SuperEnhancers.bed \
+
+CS17-12611_CF_SuperEnhancers.bed \
+
+CS17-12191_CF_SuperEnhancers.bed \
+
+-wao >> CS17_intersect_list.txt
+
+
+
+bedtools intersect -a CS17-12341_CF_SuperEnhancers.bed -b CS17-12611_CF_SuperEnhancers.bed \
+
+CS17-12191_CF_SuperEnhancers.bed \
+
+CS17-12331_CF_SuperEnhancers.bed \
+
+-wao >> CS17_intersect_list.txt
+
+
+
+bedtools intersect -a CS17-12611_CF_SuperEnhancers.bed -b CS17-12191_CF_SuperEnhancers.bed \
+
+CS17-12331_CF_SuperEnhancers.bed \
+
+CS17-12341_CF_SuperEnhancers.bed \
+
+-wao >> CS17_intersect_list.txt
+
+
+
+cat CS17_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS17_SE_0percent_intersect.bed
+
+
+
+cat CS17_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS17_CF_SE_intersect_report.txt
+
+
+
+cat CS17_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS17_CF_SE_100percent_intersect_list.txt
+
+cat CS17_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS17_CF_SE_10percent_intersect_list.txt 
+
+cat CS17_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS17_CF_SE_under10percent_intersect_list.txt 
+
+
+
+cat CS17_SE_0percent_intersect.bed CS17_CF_SE_100percent_intersect_list.txt CS17_CF_SE_10percent_intersect_list.txt CS17_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS17_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS17_CF_SE_distinct_list_10percent_cutoff.bed
+
+# 5977 
+
+head CS17_CF_SE_distinct_list_10percent_cutoff.bed
+
+chr1    839000    880200
+
+chr1    839200    880200
+
+chr1    839200    880400
+
+chr1    893200    976800
+
+chr1    932400    976800
+
+chr1    932600    976800
+
+chr1    1050000    1109400
+
+chr1    1050000    1109600
+
+chr1    1050000    1149000
+
+chr1    1282400    1311400
+
+
+
+
+
+#similarities between stages (default)
+
+bedtools jaccard -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b CS14_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b CS15_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b CS17_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SuperEnhancers.bed
+
+bedtools jaccard -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b F2-N2108_CF_SuperEnhancers.bed
+
+
+
+bedtools jaccard -a CS14_CF_SE_distinct_list_10percent_cutoff.bed -b CS15_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS14_CF_SE_distinct_list_10percent_cutoff.bed -b CS17_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS14_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SuperEnhancers.bed
+
+bedtools jaccard -a CS14_CF_SE_distinct_list_10percent_cutoff.bed -b F2-N2108_CF_SuperEnhancers.bed
+
+
+
+bedtools jaccard -a CS15_CF_SE_distinct_list_10percent_cutoff.bed -b CS17_CF_SE_distinct_list_10percent_cutoff.bed
+
+bedtools jaccard -a CS15_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SuperEnhancers.bed
+
+bedtools jaccard -a CS15_CF_SE_distinct_list_10percent_cutoff.bed -b F2-N2108_CF_SuperEnhancers.bed
+
+
+
+bedtools jaccard -a CS17_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SuperEnhancers.bed
+
+bedtools jaccard -a CS17_CF_SE_distinct_list_10percent_cutoff.bed -b F2-N2108_CF_SuperEnhancers.bed
+
+
+
+bedtools jaccard -a CS20-12104_CF_SuperEnhancers.bed -b F2-N2108_CF_SuperEnhancers.bed
+
+
+
+
+
+# intersect_among_stages.sh
+
+# distinct superenhancers among stages
+
+# convert CS20 and F2 bed files to bed3 format
+
+cat CS20-12104_CF_SuperEnhancers.bed | cut -f 1-3 > CS20-12104_CF_SuperEnhancers.bed3
+
+cat F2-N2108_CF_SuperEnhancers.bed | cut -f 1-3 > F2-N2108_CF_SuperEnhancers.bed3
+
+
+
+bedtools intersect -a CS13_CF_SE_distinct_list_10percent_cutoff.bed -b CS14_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS15_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS17_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS20-12104_CF_SuperEnhancers.bed3 \
+
+F2-N2108_CF_SuperEnhancers.bed3 \
+
+-wao  > CF_intersect_list_10.txt
+
+
+
+bedtools intersect -a CS14_CF_SE_distinct_list_10percent_cutoff.bed -b CS15_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS17_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS20-12104_CF_SuperEnhancers.bed3 \
+
+F2-N2108_CF_SuperEnhancers.bed3 \
+
+CS13_CF_SE_distinct_list_10percent_cutoff.bed \
+
+-wao >> CF_intersect_list_10.txt
+
+
+
+bedtools intersect -a CS15_CF_SE_distinct_list_10percent_cutoff.bed -b CS17_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS20-12104_CF_SuperEnhancers.bed3 \
+
+F2-N2108_CF_SuperEnhancers.bed3 \
+
+CS13_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS14_CF_SE_distinct_list_10percent_cutoff.bed \
+
+-wao >> CF_intersect_list_10.txt
+
+
+
+bedtools intersect -a CS17_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SuperEnhancers.bed3 \
+
+F2-N2108_CF_SuperEnhancers.bed3 \
+
+CS13_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS14_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS15_CF_SE_distinct_list_10percent_cutoff.bed \
+
+-wao >> CF_intersect_list_10.txt
+
+
+
+bedtools intersect -a CS20-12104_CF_SuperEnhancers.bed3 -b F2-N2108_CF_SuperEnhancers.bed3 \
+
+CS13_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS14_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS15_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS17_CF_SE_distinct_list_10percent_cutoff.bed \
+
+-wao >> CF_intersect_list_10.txt
+
+
+
+bedtools intersect -a F2-N2108_CF_SuperEnhancers.bed3 -b CS13_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS14_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS15_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS17_CF_SE_distinct_list_10percent_cutoff.bed \
+
+CS20-12104_CF_SuperEnhancers.bed3 \
+
+-wao >> CF_intersect_list_10.txt
+
+
+
+
+
+cat CF_intersect_list_10.txt | awk '{if($8==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CF_SE_0percent_intersect.bed
+
+
+
+cat CF_intersect_list_10.txt | awk '{if($8>0) print $0}' | awk '{print $0"\t"$8/($3-$2)}' > CF_SE_intersect_report.txt
+
+
+
+cat CF_SE_intersect_report.txt | awk '{if ($9==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CF_SE_100percent_intersect_list.txt
+
+cat CF_SE_intersect_report.txt | awk '{if ($9<1 && $9>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CF_SE_10percent_intersect_list.txt 
+
+cat CF_SE_intersect_report.txt | awk '{if ($9<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CF_SE_under10percent_intersect_list.txt 
+
+
+
+cat CF_SE_0percent_intersect.bed CF_SE_100percent_intersect_list.txt CF_SE_10percent_intersect_list.txt CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CF_SE_distinct_list_10percent_cutoff.bed
+
+# 19387
+
+head CF_SE_distinct_list_10percent_cutoff.bed
+
+chr1    839000    1016600
+
+chr1    839000    880200
+
+chr1    839000    976800
+
+chr1    839200    880000
+
+chr1    839200    880200
+
+chr1    839200    880400
+
+chr1    839200    976800
+
+chr1    839400    880000
+
+chr1    893000    976800
+
+chr1    893200    976800
+
+
+
+bedtools merge -i CF_SE_distinct_list_10percent_cutoff.bed > CF_SE_overall_distinct_10percent_merged.bed
+
+wc -l CF_SE_overall_distinct_10percent_merged.bed
+
+# 4339
+
+
+
+head CF_SE_overall_distinct_10percent_merged.bed
+
+chr1    839000    1016600
+
+chr1    1039400    1149000
+
+chr1    1165800    1182200
+
+chr1    1206200    1261200
+
+chr1    1279600    1311600
+
+chr1    1333000    1376800
+
+chr1    1819600    1855000
+
+chr1    1891200    1935600
+
+chr1    1950000    2071600
+
+chr1    2102800    2289600
+
