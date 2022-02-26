@@ -1,0 +1,384 @@
+# For SE that encompass genes (intersect with TSS)
+
+
+
+# make the protein-coding only version of TSS +/- 2kb
+
+cat gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed | awk '{print $4}' > protein_coding_only_list.txt
+
+cat protein_coding_only_list.txt | awk '{print "grep \""$1"\" gencode.v25lift37.annotation._2k_TSS_no_GL0.bed >> gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed"}' > find_protein_coding_tss.sh
+
+sort -k 1,1 -k 2,2n gencode.v25lift37.annotation.noGL0_lv_1_2_only.bed >  gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export HGBED=../../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export TSSBED=../../gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+bedtools intersect -a CF_unique_1percent_required.txt -b $TSSBED -wa -wb > Craniofacial-specific_tss-encompassing_SE_regions.txt
+
+bedtools intersect -a CF_shared_with_dbSUPER_1percent_required.txt -b $TSSBED -wa -wb > CF_shared_with_dbSUPER_tss-encompassing_SE_regions.txt
+
+bedtools intersect -a CF_shared_only_with_heart_1percent_required.txt -b $TSSBED -wa -wb > Embryonic_CF_heart_tss-encompassing_SE_regions.txt
+
+
+
+bedtools intersect -a CF_unique_1percent_required.txt -b $TSSBED -wa -c > Craniofacial-specific_tss-encompassing_SE_regions_counts.txt
+
+bedtools intersect -a CF_shared_with_dbSUPER_1percent_required.txt -b $TSSBED -wa -c > CF_shared_with_dbSUPER_tss-encompassing_SE_regions_counts.txt
+
+bedtools intersect -a CF_shared_only_with_heart_1percent_required.txt -b $TSSBED -wa -c > Embryonic_CF_heart_tss-encompassing_SE_regions_counts.txt
+
+
+
+# In R use cluster profiler and DOSE for GO and DO terms
+
+
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+library("clusterProfiler")
+
+library("DOSE")
+
+library("GeneStructureTools")
+
+library("AnnotationDbi")
+
+library("org.Hs.eg.db")
+
+
+
+
+
+CF_overlapped_genes <- read.table("CF_SE_overlapped_genes_ENSGID.txt", header = TRUE)
+
+CF_overlapped_genes <- as.data.frame(CF_overlapped_genes)
+
+CF_overlapped_genes$V2 <- removeVersion(CF_overlapped_genes$geneid)
+
+# Annotate
+
+CF_overlapped_genes$symbol <- mapIds(org.Hs.eg.db,
+
+                     keys=CF_overlapped_genes$V2,
+
+                     column="SYMBOL",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+CF_overlapped_genes$entrez <- mapIds(org.Hs.eg.db,
+
+                     keys=CF_overlapped_genes$V2,
+
+                     column="ENTREZID",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+                     
+
+ego <- enrichGO(gene         = CF_overlapped_genes$V2,
+
+                OrgDb         = org.Hs.eg.db,
+
+                keyType       = 'ENSEMBL',
+
+                ont           = "BP",
+
+                pAdjustMethod = "BH",
+
+                pvalueCutoff  = 0.05,
+
+                qvalueCutoff  = 0.05)
+
+
+
+
+
+
+
+
+
+# provide a background list
+
+BG <- read.table("protein_coding_only_with_non-condensed_CF_SE_list/gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed", header = FALSE)
+
+BG <- as.data.frame(BG)
+
+BG$V7 <- removeVersion(BG$V4)
+
+BG$symbol <- mapIds(org.Hs.eg.db,
+
+                     keys=BG$V7,
+
+                     column="SYMBOL",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+BG$entrez <- mapIds(org.Hs.eg.db,
+
+                     keys=BG$V7,
+
+                     column="ENTREZID",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+
+
+
+
+x <- enrichDGN(gene          = CF_overlapped_genes$entrez,
+
+              pvalueCutoff  = 0.1,
+
+              pAdjustMethod = "BH",
+
+              universe      = BG$entrez,
+
+              minGSSize     = 5,
+
+              maxGSSize     = 500,
+
+              qvalueCutoff  = 0.1,
+
+              readable      = FALSE)
+
+head(x)
+
+
+
+write.table(ego, file = "cf_specific_GO_BP_sig.txt")
+
+write.table(x, file = "CF_SE_all_overlapped_genes_DO_enrich.txt")
+
+
+
+                     
+
+
+
+
+
+#term    FDR    enrichment    count
+
+library(ggplot2)
+
+cf <- read.delim("cf_specific_GO_BP_sig.txt", header=TRUE)
+
+cf$neglog10 <- -log10(cf$p.adjust)
+
+cf$obs <- as.numeric(cf$GeneRatio)
+
+cf$expect <- as.numeric(cf$BgRatio)
+
+cf$enrichment <- cf$obs/cf$expect
+
+cf$Description <- reorder(cf$Description, cf$neglog10)
+
+
+
+
+
+ggplot(cf, aes(x=Description, y=neglog10)) +
+
+  geom_point(aes (color=enrichment, size=Count)) +   # Draw points
+
+  scale_color_gradient(low="purple", high="red") +
+
+  geom_segment(aes(x=Description, 
+
+                   xend=Description, 
+
+                   y=min(neglog10), 
+
+                   yend=max(neglog10)), 
+
+               linetype="dashed", 
+
+               size=0.1) +   # Draw dashed lines
+
+  labs(title="Biological Process GO Terms Enriched", 
+
+       subtitle="genes overlapped by superenhancers unique to embryonic craniofacial tissue") +  
+
+  coord_flip()
+
+
+
+
+
+
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+library("clusterProfiler")
+
+library("DOSE")
+
+library("GeneStructureTools")
+
+library("AnnotationDbi")
+
+library("org.Hs.eg.db")
+
+
+
+tf <- read.table("CF_unique_Bivalent_Promoters.txt", header=TRUE)
+
+
+
+tf <- as.data.frame(tf)
+
+tf$V2 <- removeVersion(tf$geneid)
+
+tf$symbol <- mapIds(org.Hs.eg.db,
+
+            keys=tf$V2,
+
+            column="SYMBOL",
+
+            keytype="ENSEMBL",
+
+            multiVals="first")
+
+tf$entrez <- mapIds(org.Hs.eg.db,
+
+            keys=tf$V2,
+
+            column="ENTREZID",
+
+            keytype="ENSEMBL",
+
+            multiVals="first")
+
+
+
+tfd <- enrichDGN(tf$entrez)
+
+
+
+## convert gene ID to Symbol
+
+tfdx <- setReadable(tfd, 'org.Hs.eg.db', 'ENTREZID')
+
+p1 <- cnetplot(tfdx)
+
+## categorySize can be scaled by 'pvalue' or 'geneNum'
+
+p2 <- cnetplot(tfdx, categorySize="pvalue")
+
+p3 <- cnetplot(tfdx, circular = TRUE, colorEdge = TRUE) 
+
+cowplot::plot_grid(p1, p2, p3, ncol=3, labels=LETTERS[1:3], rel_widths=c(.8, .8, 1.2))
+
+
+
+# Fisher exact test in R for comparison of relative amounts of gene overlapping vs non-overlapping
+
+test <- data.frame(
+
+  "olap" = c(190, 2237),
+
+  "non olap" = c(159, 1222),
+
+  row.names = c("embshare", "dbShare"),
+
+  stringsAsFactors = FALSE
+
+)
+
+colnames(test) <- c("ol", "non ol")
+
+
+
+test
+
+
+
+test_cf <- data.frame(
+
+  "olap" = c(206, 2237),
+
+  "non olap" = c(325, 1222),
+
+  row.names = c("cfUnique", "dbShare"),
+
+  stringsAsFactors = FALSE
+
+)
+
+colnames(test) <- c("ol", "non ol")
+
+
+
+test_cf
+
+
+
+test_cf2 <- data.frame(
+
+  "olap" = c(206, 190),
+
+  "non olap" = c(325, 159),
+
+  row.names = c("cfUnique", "embShare"),
+
+  stringsAsFactors = FALSE
+
+)
+
+colnames(test) <- c("ol", "non ol")
+
+
+
+test_cf2
+
+
+
+# Shuffle intersected TSS locations to determine how statistically significant the bivalent promoter overlaps are
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export TSSBED=../../gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+export GENOME=~/GENOME/hg19/Homo_sapiens/UCSC/hg19/Sequence/Chromosomes/hg19.chrom.sizes
+
+for i in {1..1000}
+
+do
+
+    bedtools shuffle -i all_CF_unique_SE_TSS_encompassed_coordinates.bed -g $GENOME -incl $TSSBED  > shuffle_biv_$i
+
+    bedtools intersect -a shuffle_biv_$i -b CF_2018_bivalent_promoter_list.bed -wb | wc -l >> occurrence_random_1000.txt
+
+done
+
+
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+occ <- read.table("occurrence_random_1000.txt", header=FALSE)
+
+hist(occ$V1, breaks=20, xlim=c(0,40))
+
+abline(v=median(occ$V1), col="black")
+
+abline(v=37, col="red")
+
