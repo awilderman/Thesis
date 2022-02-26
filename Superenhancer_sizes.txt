@@ -1,0 +1,813 @@
+# Size of superenhancer regions in CF individual samples 
+
+
+
+cd ~/ANALYSIS/ROSE/hg19
+
+cat CS13-12383_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' > CF_SE_size.txt
+
+cat CS13-12690_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS13-12829_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS13-12830_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS13-12877_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS14-12408_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS14-12709_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS14-12913_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS15-13000_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS15-13019_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS15-13128_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS17-12191_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS17-12331_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS17-12341_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS17-12611_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat CS20-12104_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+cat F2-N2108_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' >> CF_SE_size.txt
+
+
+
+# Sizes of superenhancer regions in several tissues 
+
+
+
+cd /home/FCAM/ewentworth/cotney/rawdata/chromatinsegmentations/superenhancers/human
+
+cat CS13-12383_CF_SuperEnhancers.bed \
+
+CS13-12690_CF_SuperEnhancers.bed \
+
+CS13-12829_CF_SuperEnhancers.bed \
+
+CS13-12830_CF_SuperEnhancers.bed \
+
+CS13-12877_CF_SuperEnhancers.bed \
+
+CS14-12408_CF_SuperEnhancers.bed \
+
+CS14-12709_CF_SuperEnhancers.bed \
+
+CS14-12913_CF_SuperEnhancers.bed \
+
+CS15-13000_CF_SuperEnhancers.bed \
+
+CS15-13019_CF_SuperEnhancers.bed \
+
+CS15-13128_CF_SuperEnhancers.bed \
+
+CS17-12191_CF_SuperEnhancers.bed \
+
+CS17-12331_CF_SuperEnhancers.bed \
+
+CS17-12341_CF_SuperEnhancers.bed \
+
+CS17-12611_CF_SuperEnhancers.bed \
+
+CS20-12104_CF_SuperEnhancers.bed \
+
+/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/F2-N2108_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial",$2}' > /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat 11849_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+11914_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12058_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12059_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12093_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12135_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12151_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12291_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12331_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12383_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12408_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12448_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12451_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12456_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12690_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12997_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+14135_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+14315_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart(embryonic)",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Spleen_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Spleen",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Ovary_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Ovary",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Osteoblasts_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Osteoblasts",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Lung_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Lung",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat LeftVentricle_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "LeftVentricle",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat FetalMuscle_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "FetalMuscle",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat FetalIntestineLarge_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "FetalIntestineLarge",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Esophagus_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Esophagus",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat AdiposeNuclei_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "AdiposeNuclei",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat AdrenalGland_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "AdrenalGland",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Aorta_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Aorta",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat Astrocytes_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Astrocytes",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainAngularGyrus_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainAngularGyrus",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainAnteriorCaudate_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainAnteriorCaudate",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainCingulateGyrus_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainCingulateGyrus",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainHippocampusMiddle_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainHippocampusMiddle",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainInferiorTemporalLobe_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainInferiorTemporalLobe",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat BrainMidFrontalLobe_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "BrainMidFrontalLobe",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+cat ColonCrypt1_SuperEnhancers.bed \
+
+ColonCrypt2_SuperEnhancers.bed \
+
+ColonCrypt3_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Colon_crypt",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt
+
+
+
+# Compare superenhancer region size by Stage in CF and heart samples
+
+
+
+cd /home/FCAM/ewentworth/cotney/rawdata/chromatinsegmentations/superenhancers/human
+
+cat CS13-12383_CF_SuperEnhancers.bed \
+
+CS13-12690_CF_SuperEnhancers.bed \
+
+CS13-12829_CF_SuperEnhancers.bed \
+
+CS13-12830_CF_SuperEnhancers.bed \
+
+CS13-12877_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_CS13",$2}' > /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat CS14-12408_CF_SuperEnhancers.bed \
+
+CS14-12709_CF_SuperEnhancers.bed \
+
+CS14-12913_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_CS14",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat CS15-13000_CF_SuperEnhancers.bed \
+
+CS15-13019_CF_SuperEnhancers.bed \
+
+CS15-13128_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_CS15",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat CS17-12191_CF_SuperEnhancers.bed \
+
+CS17-12331_CF_SuperEnhancers.bed \
+
+CS17-12341_CF_SuperEnhancers.bed \
+
+CS17-12611_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_CS17",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat CS20-12104_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_CS20",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/F2-N2108_CF_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial_F2",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12383_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12690_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS13",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12408_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+14135_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS14",$2}' > /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12997_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+14315_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS16",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12291_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12331_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS17",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12059_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12456_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS18",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 11914_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12135_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS19",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12448_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12451_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS20",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 11849_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12093_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS21",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+cat 12058_heart_superenhancer-sorted_SuperEnhancers.bed \
+
+12151_heart_superenhancer-sorted_SuperEnhancers.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart_CS23",$2}' >> /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt
+
+
+
+
+
+# To make table, copy to personal computer, open bed files in text wrangler and copy paste to excel
+
+cd /Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/*_SuperEnhancers.bed ./
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/CF_SE_size.txt ./
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/MultiTissue_SE_size.txt ./
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/human_embryonic_SE_size_by_stage.txt ./
+
+
+
+# To make histogram in Rstudio
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human")
+
+CF_SE <- read.table("CF_SE_size.txt", row.names = 1, header = FALSE)
+
+head(CF_SE)
+
+library(ggplot2)
+
+CF_SE <- as.data.frame(CF_SE)
+
+p <- ggplot(CF_SE, aes(x=V2)) +
+
+geom_histogram(binwidth=1000, color="black", fill="white")
+
+#pdf("CF_SE_size_histogram.pdf")
+
+p
+
+#dev.off()
+
+
+
+# make violin plots from multitissue
+
+#setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human")
+
+Multi <- read.table("MultiTissue_SE_size.txt", header = FALSE)
+
+head(Multi)
+
+library(ggplot2)
+
+Multi <- as.data.frame(Multi)
+
+Multi$V3 <- log10(Multi$V2)
+
+p <- ggplot(Multi, aes(x=V3, y=V1, fill=V1)) +
+
+geom_violin()
+
+#pdf("CF_SE_size_histogram.pdf")
+
+p + stat_summary(fun=mean, geom="point", shape=23, size=2)
+
+#p + geom_boxplot(width=0.05)
+
+dev.off()
+
+
+
+Stage <- read.table("human_embryonic_SE_size_by_stage.txt", header = FALSE)
+
+head(Stage)
+
+#library(ggplot2)
+
+Stage <- as.data.frame(Stage)
+
+p <- ggplot(Stage, aes(x=V2, y=V1, fill=V1)) +
+
+geom_violin()
+
+pdf("human_embryonic_SE_size_by_stage_histogram.pdf")
+
+p + stat_summary(fun=mean, geom="point", shape=23, size=2)
+
+#p + geom_boxplot(width=0.05)
+
+dev.off()
+
+
+
+#medians of various tissues
+
+## Tried to represent it this way and the boxplot with individual points labeled isn't working
+
+Craniofacial <- subset(Multi, V1 == 'Craniofacial')
+
+Heart <- subset(Multi, V1 == 'Heart(embryonic)')
+
+Spleen <- subset(Multi, V1 == 'Spleen')
+
+Ovary <- subset(Multi, V1 == 'Ovary')
+
+Osteoblasts <- subset(Multi, V1 == 'Osteoblasts')
+
+Lung <- subset(Multi, V1 == 'Lung')
+
+LeftVentricle <- subset(Multi, V1 == 'LeftVentricle')
+
+FetalMuscle <- subset(Multi, V1 == 'FetalMuscle')
+
+FetalIntestineLarge <- subset(Multi, V1 == 'FetalIntestineLarge')
+
+Esophagus <- subset(Multi, V1 == 'Esophagus')
+
+AdiposeNuclei <- subset(Multi, V1 == 'AdiposeNuclei')
+
+AdrenalGland <- subset(Multi, V1 == 'AdrenalGland')
+
+Aorta <- subset(Multi, V1 == 'Aorta')
+
+Astrocytes <- subset(Multi, V1 == 'Astrocytes')
+
+BrainAngularGyrus <- subset(Multi, V1 == 'BrainAngularGyrus')
+
+BrainAnteriorCaudate <- subset(Multi, V1 == 'BrainAnteriorCaudate')
+
+BrainCingulateGyrus <- subset(Multi, V1 == 'BrainCingulateGyrus')
+
+BrainHippocampusMiddle <- subset(Multi, V1 == 'BrainHippocampusMiddle')
+
+BrainInferiorTemporalLobe <- subset(Multi, V1 == 'BrainInferiorTemporalLobe')
+
+BrainMidFrontalLobe <- subset(Multi, V1 == 'BrainMidFrontalLobe')
+
+
+
+TissueMedians <- c(median(Craniofacial$V2),
+
+median(Heart$V2),
+
+median(Spleen$V2),
+
+median(Ovary$V2),
+
+median(Osteoblasts$V2),
+
+median(Lung$V2),
+
+median(LeftVentricle$V2),
+
+median(FetalMuscle$V2),
+
+median(FetalIntestineLarge$V2),
+
+median(Esophagus$V2),
+
+median(AdiposeNuclei$V2),
+
+median(AdrenalGland$V2),
+
+median(Aorta$V2),
+
+median(Astrocytes$V2),
+
+median(BrainAngularGyrus$V2),
+
+median(BrainAnteriorCaudate$V2),
+
+median(BrainCingulateGyrus$V2),
+
+median(BrainHippocampusMiddle$V2),
+
+median(BrainInferiorTemporalLobe$V2),
+
+median(BrainMidFrontalLobe$V2))
+
+
+
+ID <- c("Craniofacial",
+
+"Heart",
+
+"Spleen",
+
+"Ovary",
+
+"Osteoblasts",
+
+"Lung",
+
+"LeftVentricle",
+
+"FetalMuscle",
+
+"FetalIntestineLarge",
+
+"Esophagus",
+
+"AdiposeNuclei",
+
+"AdrenalGland",
+
+"Aorta",
+
+"Astrocytes",
+
+"BrainAngularGyrus",
+
+"BrainAnteriorCaudate",
+
+"BrainCingulateGyrus",
+
+"BrainHippocampusMiddle",
+
+"BrainInferiorTemporalLobe",
+
+"BrainMidFrontalLobe")
+
+
+
+summary <- group_by(Multi, V1) %>%
+
+summarise(count=n(), median=median(V2), IQR=IQR(V2))
+
+
+
+write.table(summary, file="MultiTissue_SE_size.txt")
+
+
+
+CraniofacialSpleen <- wilcox.test(Craniofacial$V2, Spleen$V2, alternative="greater")
+
+CraniofacialOvary <- wilcox.test(Craniofacial$V2, Ovary$V2, alternative="greater")
+
+CraniofacialOsteoblasts <- wilcox.test(Craniofacial$V2, Osteoblasts$V2, alternative="greater")
+
+CraniofacialLung <- wilcox.test(Craniofacial$V2, Lung$V2, alternative="greater")
+
+CraniofacialLeftVentricle <- wilcox.test(Craniofacial$V2, LeftVentricle$V2, alternative="greater")
+
+CraniofacialFetalMuscle <- wilcox.test(Craniofacial$V2, FetalMuscle$V2, alternative="greater")
+
+CraniofacialFetalIntestineLarge <- wilcox.test(Craniofacial$V2, FetalIntestineLarge$V2, alternative="greater")
+
+CraniofacialEsophagus <- wilcox.test(Craniofacial$V2, Esophagus$V2, alternative="greater")
+
+CraniofacialAdiposeNuclei <- wilcox.test(Craniofacial$V2, AdiposeNuclei$V2, alternative="greater")
+
+CraniofacialAdrenalGland <- wilcox.test(Craniofacial$V2, AdrenalGland$V2, alternative="greater")
+
+CraniofacialAorta <- wilcox.test(Craniofacial$V2, Aorta$V2, alternative="greater")
+
+CraniofacialAstrocytes <- wilcox.test(Craniofacial$V2, Astrocytes$V2, alternative="greater")
+
+CraniofacialBrainAngularGyrus <- wilcox.test(Craniofacial$V2, BrainAngularGyrus$V2, alternative="greater")
+
+CraniofacialBrainAnteriorCaudate <- wilcox.test(Craniofacial$V2, BrainAnteriorCaudate$V2, alternative="greater")
+
+CraniofacialBrainCingulateGyrus <- wilcox.test(Craniofacial$V2, BrainCingulateGyrus$V2, alternative="greater")
+
+CraniofacialBrainHippocampusMiddle <- wilcox.test(Craniofacial$V2, BrainHippocampusMiddle$V2, alternative="greater")
+
+CraniofacialBrainInferiorTemporalLobe <- wilcox.test(Craniofacial$V2, BrainInferiorTemporalLobe$V2, alternative="greater")
+
+CraniofacialBrainMidFrontalLobe <- wilcox.test(Craniofacial$V2, BrainMidFrontalLobe$V2, alternative="greater")
+
+
+
+HeartCraniofacial <- wilcox.test(Heart$V2, Craniofacial$V2, alternative="greater")
+
+HeartSpleen <- wilcox.test(Heart$V2, Spleen$V2, alternative="greater")
+
+HeartOvary <- wilcox.test(Heart$V2, Ovary$V2, alternative="greater")
+
+HeartOsteoblasts <- wilcox.test(Heart$V2, Osteoblasts$V2, alternative="greater")
+
+HeartLung <- wilcox.test(Heart$V2, Lung$V2, alternative="greater")
+
+HeartLeftVentricle <- wilcox.test(Heart$V2, LeftVentricle$V2, alternative="greater")
+
+HeartFetalMuscle <- wilcox.test(Heart$V2, FetalMuscle$V2, alternative="greater")
+
+HeartFetalIntestineLarge <- wilcox.test(Heart$V2, FetalIntestineLarge$V2, alternative="greater")
+
+HeartEsophagus <- wilcox.test(Heart$V2, Esophagus$V2, alternative="greater")
+
+HeartAdiposeNuclei <- wilcox.test(Heart$V2, AdiposeNuclei$V2, alternative="greater")
+
+HeartAdrenalGland <- wilcox.test(Heart$V2, AdrenalGland$V2, alternative="greater")
+
+HeartAorta <- wilcox.test(Heart$V2, Aorta$V2, alternative="greater")
+
+HeartAstrocytes <- wilcox.test(Heart$V2, Astrocytes$V2, alternative="greater")
+
+HeartBrainAngularGyrus <- wilcox.test(Heart$V2, BrainAngularGyrus$V2, alternative="greater")
+
+HeartBrainAnteriorCaudate <- wilcox.test(Heart$V2, BrainAnteriorCaudate$V2, alternative="greater")
+
+HeartBrainCingulateGyrus <- wilcox.test(Heart$V2, BrainCingulateGyrus$V2, alternative="greater")
+
+HeartBrainHippocampusMiddle <- wilcox.test(Heart$V2, BrainHippocampusMiddle$V2, alternative="greater")
+
+HeartBrainInferiorTemporalLobe <- wilcox.test(Heart$V2, BrainInferiorTemporalLobe$V2, alternative="greater")
+
+HeartBrainMidFrontalLobe <- wilcox.test(Heart$V2, BrainMidFrontalLobe$V2, alternative="greater")
+
+
+
+
+
+CraniofacialSpleen$p.value
+
+CraniofacialOvary$p.value
+
+CraniofacialOsteoblasts$p.value
+
+CraniofacialLung$p.value
+
+CraniofacialLeftVentricle$p.value
+
+CraniofacialFetalMuscle$p.value
+
+CraniofacialFetalIntestineLarge$p.value
+
+CraniofacialEsophagus$p.value
+
+CraniofacialAdiposeNuclei$p.value
+
+CraniofacialAdrenalGland$p.value
+
+CraniofacialAorta$p.value
+
+CraniofacialAstrocytes$p.value
+
+CraniofacialBrainAngularGyrus$p.value
+
+CraniofacialBrainAnteriorCaudate$p.value
+
+CraniofacialBrainCingulateGyrus$p.value
+
+CraniofacialBrainHippocampusMiddle$p.value
+
+CraniofacialBrainInferiorTemporalLobe$p.value 
+
+CraniofacialBrainMidFrontalLobe$p.value
+
+HeartCraniofacial$p.value
+
+HeartSpleen$p.value
+
+HeartOvary$p.value
+
+HeartOsteoblasts$p.value
+
+HeartLung$p.value
+
+HeartLeftVentricle$p.value
+
+HeartFetalMuscle$p.value
+
+HeartFetalIntestineLarge$p.value
+
+HeartEsophagus$p.value
+
+HeartAdiposeNuclei$p.value
+
+HeartAdrenalGland$p.value 
+
+HeartAorta$p.value
+
+HeartAstrocytes$p.value
+
+HeartBrainAngularGyrus$p.value
+
+HeartBrainAnteriorCaudate$p.value
+
+HeartBrainCingulateGyrus$p.value
+
+HeartBrainHippocampusMiddle$p.value
+
+HeartBrainInferiorTemporalLobe$p.value
+
+HeartBrainMidFrontalLobe$p.value
+
+
+
+
+
+SpleenOvary <- wilcox.test(Spleen$V2, Ovary$V2, alternative="two.sided")
+
+SpleenOsteoblasts <- wilcox.test(Spleen$V2, Osteoblasts$V2, alternative="two.sided")
+
+SpleenLung <- wilcox.test(Spleen$V2, Lung$V2, alternative="two.sided")
+
+SpleenLeftVentricle <- wilcox.test(Spleen$V2, LeftVentricle$V2, alternative="two.sided")
+
+SpleenFetalMuscle <- wilcox.test(Spleen$V2, FetalMuscle$V2, alternative="two.sided")
+
+SpleenFetalIntestineLarge <- wilcox.test(Spleen$V2, FetalIntestineLarge$V2, alternative="two.sided")
+
+SpleenEsophagus <- wilcox.test(Spleen$V2, Esophagus$V2, alternative="two.sided")
+
+SpleenAdiposeNuclei <- wilcox.test(Spleen$V2, AdiposeNuclei$V2, alternative="two.sided")
+
+SpleenAdrenalGland <- wilcox.test(Spleen$V2, AdrenalGland$V2, alternative="two.sided")
+
+SpleenAorta <- wilcox.test(Spleen$V2, Aorta$V2, alternative="two.sided")
+
+SpleenAstrocytes <- wilcox.test(Spleen$V2, Astrocytes$V2, alternative="two.sided")
+
+SpleenBrainAngularGyrus <- wilcox.test(Spleen$V2, BrainAngularGyrus$V2, alternative="two.sided")
+
+SpleenBrainAnteriorCaudate <- wilcox.test(Spleen$V2, BrainAnteriorCaudate$V2, alternative="two.sided")
+
+SpleenBrainCingulateGyrus <- wilcox.test(Spleen$V2, BrainCingulateGyrus$V2, alternative="two.sided")
+
+SpleenBrainHippocampusMiddle <- wilcox.test(Spleen$V2, BrainHippocampusMiddle$V2, alternative="two.sided")
+
+SpleenBrainInferiorTemporalLobe <- wilcox.test(Spleen$V2, BrainInferiorTemporalLobe$V2, alternative="two.sided")
+
+SpleenBrainMidFrontalLobe <- wilcox.test(Spleen$V2, BrainMidFrontalLobe$V2, alternative="two.sided")
+
+
+
+SpleenOvary$p.value
+
+SpleenOsteoblasts$p.value
+
+SpleenLung$p.value
+
+SpleenLeftVentricle$p.value
+
+SpleenFetalMuscle$p.value
+
+SpleenFetalIntestineLarge$p.value
+
+SpleenEsophagus$p.value
+
+SpleenAdiposeNuclei$p.value
+
+SpleenAdrenalGland$p.value 
+
+SpleenAorta$p.value
+
+SpleenAstrocytes$p.value
+
+SpleenBrainAngularGyrus$p.value
+
+SpleenBrainAnteriorCaudate$p.value
+
+SpleenBrainCingulateGyrus$p.value
+
+SpleenBrainHippocampusMiddle$p.value
+
+SpleenBrainInferiorTemporalLobe$p.value
+
+SpleenBrainMidFrontalLobe$p.value
+
+
+
+CraniofacialHeart <- ks.test(Craniofacial$V2, Heart$V2, exact=NULL)
+
+CraniofacialSpleen <- ks.test(Craniofacial$V2, Spleen$V2, exact=NULL)
+
+CraniofacialOvary <- ks.test(Craniofacial$V2, Ovary$V2, exact=NULL)
+
+CraniofacialOsteoblasts <- ks.test(Craniofacial$V2, Osteoblasts$V2, exact=NULL)
+
+CraniofacialLung <- ks.test(Craniofacial$V2, Lung$V2, exact=NULL)
+
+CraniofacialLeftVentricle <- ks.test(Craniofacial$V2, LeftVentricle$V2, exact=NULL)
+
+CraniofacialFetalMuscle <- ks.test(Craniofacial$V2, FetalMuscle$V2, exact=NULL)
+
+CraniofacialFetalIntestineLarge <- ks.test(Craniofacial$V2, FetalIntestineLarge$V2, exact=NULL)
+
+CraniofacialEsophagus <- ks.test(Craniofacial$V2, Esophagus$V2, exact=NULL)
+
+CraniofacialAdiposeNuclei <- ks.test(Craniofacial$V2, AdiposeNuclei$V2, exact=NULL)
+
+CraniofacialAdrenalGland <- ks.test(Craniofacial$V2, AdrenalGland$V2, exact=NULL)
+
+CraniofacialAorta <- ks.test(Craniofacial$V2, Aorta$V2, exact=NULL)
+
+CraniofacialAstrocytes <- ks.test(Craniofacial$V2, Astrocytes$V2, exact=NULL)
+
+CraniofacialBrainAngularGyrus <- ks.test(Craniofacial$V2, BrainAngularGyrus$V2, exact=NULL)
+
+CraniofacialBrainAnteriorCaudate <- ks.test(Craniofacial$V2, BrainAnteriorCaudate$V2, exact=NULL)
+
+CraniofacialBrainCingulateGyrus <- ks.test(Craniofacial$V2, BrainCingulateGyrus$V2, exact=NULL)
+
+CraniofacialBrainHippocampusMiddle <- ks.test(Craniofacial$V2, BrainHippocampusMiddle$V2, exact=NULL)
+
+CraniofacialBrainInferiorTemporalLobe <- ks.test(Craniofacial$V2, BrainInferiorTemporalLobe$V2, exact=NULL)
+
+CraniofacialBrainMidFrontalLobe <- ks.test(Craniofacial$V2, BrainMidFrontalLobe$V2, exact=NULL)
+
+
+
+# can't do ks because of ties
+
+
+
+
+
+
+
+OvaryOsteoblasts <- wilcox.test(Ovary$V2, Osteoblasts$V2, alternative="two.sided")
+
+OvaryLung <- wilcox.test(Ovary$V2, Lung$V2, alternative="two.sided")
+
+OvaryLeftVentricle <- wilcox.test(Ovary$V2, LeftVentricle$V2, alternative="two.sided")
+
+OvaryFetalMuscle <- wilcox.test(Ovary$V2, FetalMuscle$V2, alternative="two.sided")
+
+OvaryFetalIntestineLarge <- wilcox.test(Ovary$V2, FetalIntestineLarge$V2, alternative="two.sided")
+
+OvaryEsophagus <- wilcox.test(Ovary$V2, Esophagus$V2, alternative="two.sided")
+
+OvaryAdiposeNuclei <- wilcox.test(Ovary$V2, AdiposeNuclei$V2, alternative="two.sided")
+
+OvaryAdrenalGland <- wilcox.test(Ovary$V2, AdrenalGland$V2, alternative="two.sided")
+
+OvaryAorta <- wilcox.test(Ovary$V2, Aorta$V2, alternative="two.sided")
+
+OvaryAstrocytes <- wilcox.test(Ovary$V2, Astrocytes$V2, alternative="two.sided")
+
+OvaryBrainAngularGyrus <- wilcox.test(Ovary$V2, BrainAngularGyrus$V2, alternative="two.sided")
+
+OvaryBrainAnteriorCaudate <- wilcox.test(Ovary$V2, BrainAnteriorCaudate$V2, alternative="two.sided")
+
+OvaryBrainCingulateGyrus <- wilcox.test(Ovary$V2, BrainCingulateGyrus$V2, alternative="two.sided")
+
+OvaryBrainHippocampusMiddle <- wilcox.test(Ovary$V2, BrainHippocampusMiddle$V2, alternative="two.sided")
+
+OvaryBrainInferiorTemporalLobe <- wilcox.test(Ovary$V2, BrainInferiorTemporalLobe$V2, alternative="two.sided")
+
+OvaryBrainMidFrontalLobe <- wilcox.test(Ovary$V2, BrainMidFrontalLobe$V2, alternative="two.sided")
+
+
+
+OvaryOsteoblasts$p.value
+
+OvaryLung$p.value
+
+OvaryLeftVentricle$p.value
+
+OvaryFetalMuscle$p.value
+
+OvaryFetalIntestineLarge$p.value
+
+OvaryEsophagus$p.value
+
+OvaryAdiposeNuclei$p.value
+
+OvaryAdrenalGland$p.value 
+
+OvaryAorta$p.value
+
+OvaryAstrocytes$p.value
+
+OvaryBrainAngularGyrus$p.value
+
+OvaryBrainAnteriorCaudate$p.value
+
+OvaryBrainCingulateGyrus$p.value
+
+OvaryBrainHippocampusMiddle$p.value
+
+OvaryBrainInferiorTemporalLobe$p.value
+
+OvaryBrainMidFrontalLobe$p.value
