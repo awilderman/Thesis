@@ -1,0 +1,585 @@
+# intersect distinct CF regions with SE in other tissues to identify ones that are unique
+
+
+
+# move the merged bed files to the main page and make sure to label with CF or heart in $4
+
+
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/heart
+
+cat heart_SE_overall_distinct_10percent_merged.bed | awk '{print $0"\theart"}' > heart_SE_overall_distinct_10percent_merged_labeled.bed
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/CF
+
+cat CF_SE_overall_distinct_10percent_merged.bed | awk '{print $0"\tcraniofacial"}' > CF_SE_overall_distinct_10percent_merged_labeled.bed
+
+
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE
+
+
+
+export HEART=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/heart/heart_SE_overall_distinct_10percent_merged_labeled.bed
+
+export FACE=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/CF/CF_SE_overall_distinct_10percent_merged_labeled.bed
+
+export SUPER=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/dbsuper/data/bed/hg19/dbSuper_all_SE_labeled.bed
+
+
+
+
+
+cat $SUPER $HEART $FACE > all_SE_dbSUPER_CF_heart.bed
+
+cat $SUPER $HEART  > all_SE_dbSUPER_heart_NO_CF.bed
+
+cat $SUPER $FACE > all_SE_dbSUPER_CF_NO_HEART.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Esophagus > all_SE_dbSUPER_CF_heart_NO_ESOPHAGUS.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Fetal_Muscle > all_SE_dbSUPER_CF_heart_NO_FETAL_MUSCLE.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Adrenal_Gland > all_SE_dbSUPER_CF_heart_NO_ADRENAL_GLAND.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Left_Ventricle > all_SE_dbSUPER_CF_heart_NO_LEFT_VENTRICLE.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Spleen > all_SE_dbSUPER_CF_heart_NO_SPLEEN.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Astrocytes > all_SE_dbSUPER_CF_heart_NO_ASTROCYTES.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Osteoblasts > all_SE_dbSUPER_CF_heart_NO_OSTEOBLASTS.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Aorta > all_SE_dbSUPER_CF_heart_NO_AORTA.bed
+
+cat all_SE_dbSUPER_CF_heart.bed | grep -v Ovary > all_SE_dbSUPER_CF_heart_NO_OVARY.bed
+
+
+
+# Bedtools intersect to identify Tissue-specific superenhancers for comparison of tissue-specific enhancer size to general population of SE in same tissue
+
+
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export HGBED=../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export SUPERDIR=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/dbsuper/data/bed/hg19
+
+
+
+bedtools intersect -a $FACE -b all_SE_dbSUPER_heart_NO_CF.bed -v > CF_specific_SE.txt
+
+bedtools intersect -a $HEART -b all_SE_dbSUPER_CF_NO_HEART.bed -v > Heart_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Esophagus.bed -b all_SE_dbSUPER_CF_heart_NO_ESOPHAGUS.bed -v > Esophagus_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Fetal_Muscle.bed -b all_SE_dbSUPER_CF_heart_NO_FETAL_MUSCLE.bed -v > Fetal_Muscle_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Adrenal_Gland.bed -b all_SE_dbSUPER_CF_heart_NO_ADRENAL_GLAND.bed -v > Adrenal_Gland_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Left_Ventricle.bed -b all_SE_dbSUPER_CF_heart_NO_LEFT_VENTRICLE.bed -v > Left_Ventricle_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Spleen.bed -b all_SE_dbSUPER_CF_heart_NO_SPLEEN.bed -v > Spleeen_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Astrocytes.bed -b all_SE_dbSUPER_CF_heart_NO_ASTROCYTES.bed -v > Astrocytes_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Osteoblasts.bed -b all_SE_dbSUPER_CF_heart_NO_OSTEOBLASTS.bed -v > Osteoblasts_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Aorta.bed -b all_SE_dbSUPER_CF_heart_NO_AORTA.bed -v > Aorta_specific_SE.txt
+
+bedtools intersect -a $SUPERDIR/Ovary.bed -b all_SE_dbSUPER_CF_heart_NO_OVARY.bed -v > Ovary_specific_SE.txt
+
+
+
+cat $FACE | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Craniofacial",$2}' > MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $HEART | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Heart",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Esophagus.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Esophagus",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Fetal_Muscle.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Fetal_Muscle",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Adrenal_Gland.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Adrenal_Gland",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Left_Ventricle.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Left_Ventricle",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Spleen.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Spleen",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Astrocytes.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Astrocytes",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Osteoblasts.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Osteoblasts",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Aorta.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Aorta",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+cat $SUPERDIR/Ovary.bed | awk '{print $4,$3-$2}' | sort -k2,2n | awk '{print "Ovary",$2}' >> MultiTissue_SE_size_w_distinct_regions.txt
+
+
+
+
+
+cat CF_specific_SE.txt | awk '{print "CF_specific\t"$3-$2}'  > Tissue_specific_SE_size.txt
+
+cat Heart_specific_SE.txt | awk '{print "Heart_specific\t"$3-$2}' >> Tissue_specific_SE_size.txt
+
+cat Esophagus_specific_SE.txt | awk '{print "Esophagus_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Fetal_Muscle_specific_SE.txt | awk '{print "Fetal_Muscle_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Adrenal_Gland_specific_SE.txt | awk '{print "Adrenal_Gland_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Left_Ventricle_specific_SE.txt | awk '{print "Left_Ventricle_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Spleeen_specific_SE.txt | awk '{print "Spleen_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Astrocytes_specific_SE.txt | awk '{print "Astrocytes_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Osteoblasts_specific_SE.txt | awk '{print "Osteoblasts_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Aorta_specific_SE.txt | awk '{print "Aorta_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+cat Ovary_specific_SE.txt | awk '{print "Ovary_specific\t"$3-$2}'  >> Tissue_specific_SE_size.txt
+
+
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE/Tissue_specific_SE_size.txt  ./
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE/MultiTissue_SE_size_w_distinct_regions.txt  ./
+
+
+
+# make violin plots from multitissue (This doesn't have to be re-made as it doesn't involve overlapping of genes)
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+Specific <- read.table("Tissue_specific_SE_size.txt", header = FALSE)
+
+head(Specific)
+
+library(ggplot2)
+
+Specific <- as.data.frame(Specific)
+
+Specific$V3 <- log10(Specific$V2)
+
+p <- ggplot(Specific, aes(x=V3, y=V1, fill=V1)) +
+
+geom_violin()
+
+p + stat_summary(fun=mean, geom="point", shape=23, size=2)
+
+
+
+
+
+Multi <- read.table("MultiTissue_SE_size_w_distinct_regions.txt", header = FALSE)
+
+head(Multi)
+
+Multi <- as.data.frame(Multi)
+
+Multi$V3 <- log10(Multi$V2)
+
+
+
+# Compare tissue-specific to its full distribution
+
+Craniofacial <- subset(Multi, V1 == 'Craniofacial')
+
+Heart <- subset(Multi, V1 == 'Heart')
+
+Spleen <- subset(Multi, V1 == 'Spleen')
+
+LeftVentricle <- subset(Multi, V1 == 'Left_Ventricle')
+
+FetalMuscle <- subset(Multi, V1 == 'Fetal_Muscle')
+
+Esophagus <- subset(Multi, V1 == 'Esophagus')
+
+AdrenalGland <- subset(Multi, V1 == 'Adrenal_Gland')
+
+Astrocytes <- subset(Multi, V1 == 'Astrocytes')
+
+Osteoblasts <- subset(Multi, V1 == 'Osteoblasts')
+
+Aorta <- subset(Multi, V1 == 'Aorta')
+
+Ovary <- subset(Multi, V1 == 'Ovary')
+
+
+
+CF_specific <- subset(Specific, V1 == 'CF_specific')
+
+Heart_specific <- subset(Specific, V1 == 'Heart_specific')
+
+Spleen_specific <- subset(Specific, V1 == 'Spleen_specific')
+
+Left_Ventricle_specific <- subset(Specific, V1 == 'Left_Ventricle_specific')
+
+Adrenal_Gland_specific <- subset(Specific, V1 == 'Adrenal_Gland_specific')
+
+Fetal_Muscle_specific <- subset(Specific, V1 == 'Fetal_Muscle_specific')
+
+Esophagus_specific <- subset(Specific, V1 == 'Esophagus_specific')
+
+Astrocytes_specific <- subset(Specific, V1 == 'Astrocytes_specific')
+
+Osteoblasts_specific <- subset(Specific, V1 == 'Osteoblasts_specific')
+
+Aorta_specific <- subset(Specific, V1 == 'Aorta_specific')
+
+Ovary_specific <- subset(Specific, V1 == 'Ovary_specific')
+
+
+
+CF_compare <- wilcox.test(Craniofacial$V3, CF_specific$V3, alternative="two.sided")
+
+Heart_compare <- wilcox.test(Heart$V3, Heart_specific$V3, alternative="two.sided")
+
+Spleen_compare <- wilcox.test(Spleen$V3, Spleen_specific$V3, alternative="two.sided")
+
+Left_Ventricle_compare <- wilcox.test(LeftVentricle$V3, Left_Ventricle_specific$V3, alternative="two.sided")
+
+Adrenal_Gland_compare <- wilcox.test(AdrenalGland$V3, Adrenal_Gland_specific$V3, alternative="two.sided")
+
+Fetal_Muscle_compare <- wilcox.test(FetalMuscle$V3, Fetal_Muscle_specific$V3, alternative="two.sided")
+
+Esophagus_compare <- wilcox.test(Esophagus$V3, Esophagus_specific$V3, alternative="two.sided")
+
+Astrocytes_compare <- wilcox.test(Astrocytes$V3, Astrocytes_specific$V3, alternative="two.sided")
+
+Osteoblasts_compare <- wilcox.test(Osteoblasts$V3, Osteoblasts_specific$V3, alternative="two.sided")
+
+Aorta_compare <- wilcox.test(Aorta$V3, Aorta_specific$V3, alternative="two.sided")
+
+Ovary_compare <- wilcox.test(Ovary$V3, Ovary_specific$V3, alternative="two.sided")
+
+
+
+CF_compare # p<2.2e-16
+
+Heart_compare # p<2.2e-16
+
+Spleen_compare # p=0.01422
+
+Left_Ventricle_compare # p=0.3228
+
+Adrenal_Gland_compare # p=0.2552
+
+Fetal_Muscle_compare # p=0.4331
+
+Esophagus_compare # p=0.9732
+
+Astrocytes_compare # p=0.1396
+
+Osteoblasts_compare # p=0.01142
+
+Aorta_compare # p=0.1392
+
+Ovary_compare # p=0.3565
+
+
+
+library(dplyr)
+
+specific_summary <- group_by(Specific, V1) %>%
+
+summarise(count=n(), median=median(V2), IQR=IQR(V2))
+
+
+
+multi_summary <- group_by(Multi, V1) %>%
+
+summarise(count=n(), median=median(V2), IQR=IQR(V2))
+
+
+
+# summary and p.value results to Tissue-specific_SE_size_compare_using_distinct_regions.xlsx
+
+
+
+####
+
+### Repeat with definition of "shared" as 1% reciprocal overlap
+
+
+
+# intersect distinct CF regions with SE in other tissues to identify ones that are unique
+
+
+
+# move the merged bed files to the main page and make sure to label with CF or heart in $4
+
+
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE
+
+
+
+export HEART=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/heart/heart_SE_overall_distinct_10percent_merged_labeled.bed
+
+export FACE=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/CF/CF_SE_overall_distinct_10percent_merged_labeled.bed
+
+export SUPER=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/dbsuper/data/bed/hg19/dbSuper_all_SE_labeled.bed
+
+
+
+
+
+# Bedtools intersect to identify Tissue-specific superenhancers for comparison of tissue-specific enhancer size to general population of SE in same tissue
+
+
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export HGBED=../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export SUPERDIR=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/dbsuper/data/bed/hg19
+
+
+
+bedtools intersect -a $FACE -b all_SE_dbSUPER_heart_NO_CF.bed -f 0.01 -r -v > CF_specific_SE_1percent_required.txt
+
+bedtools intersect -a $HEART -b all_SE_dbSUPER_CF_NO_HEART.bed -f 0.01 -r -v > Heart_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Esophagus.bed -b all_SE_dbSUPER_CF_heart_NO_ESOPHAGUS.bed -f 0.01 -r -v > Esophagus_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Fetal_Muscle.bed -b all_SE_dbSUPER_CF_heart_NO_FETAL_MUSCLE.bed -f 0.01 -r -v > Fetal_Muscle_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Adrenal_Gland.bed -b all_SE_dbSUPER_CF_heart_NO_ADRENAL_GLAND.bed -f 0.01 -r -v > Adrenal_Gland_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Left_Ventricle.bed -b all_SE_dbSUPER_CF_heart_NO_LEFT_VENTRICLE.bed -f 0.01 -r -v > Left_Ventricle_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Spleen.bed -b all_SE_dbSUPER_CF_heart_NO_SPLEEN.bed -f 0.01 -r -v > Spleeen_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Astrocytes.bed -b all_SE_dbSUPER_CF_heart_NO_ASTROCYTES.bed -f 0.01 -r -v > Astrocytes_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Osteoblasts.bed -b all_SE_dbSUPER_CF_heart_NO_OSTEOBLASTS.bed -f 0.01 -r -v > Osteoblasts_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Aorta.bed -b all_SE_dbSUPER_CF_heart_NO_AORTA.bed -f 0.01 -r -v > Aorta_specific_SE_1percent_required.txt
+
+bedtools intersect -a $SUPERDIR/Ovary.bed -b all_SE_dbSUPER_CF_heart_NO_OVARY.bed -f 0.01 -r -v > Ovary_specific_SE_1percent_required.txt
+
+
+
+# use the old MultiTissue size file, that is the list of all regardless of intersection
+
+
+
+cat CF_specific_SE_1percent_required.txt | awk '{print "CF_specific\t"$3-$2}'  > Tissue_specific_SE_1percent_required_size.txt
+
+cat Heart_specific_SE_1percent_required.txt | awk '{print "Heart_specific\t"$3-$2}' >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Esophagus_specific_SE_1percent_required.txt | awk '{print "Esophagus_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Fetal_Muscle_specific_SE_1percent_required.txt | awk '{print "Fetal_Muscle_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Adrenal_Gland_specific_SE_1percent_required.txt | awk '{print "Adrenal_Gland_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Left_Ventricle_specific_SE_1percent_required.txt | awk '{print "Left_Ventricle_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Spleeen_specific_SE_1percent_required.txt | awk '{print "Spleen_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Astrocytes_specific_SE_1percent_required.txt | awk '{print "Astrocytes_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Osteoblasts_specific_SE_1percent_required.txt | awk '{print "Osteoblasts_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Aorta_specific_SE_1percent_required.txt | awk '{print "Aorta_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+cat Ovary_specific_SE_1percent_required.txt | awk '{print "Ovary_specific\t"$3-$2}'  >> Tissue_specific_SE_1percent_required_size.txt
+
+
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE/Tissue_specific_SE_1percent_required_size.txt  ./
+
+scp awilderman@transfer.cam.uchc.edu:/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE/MultiTissue_SE_size_w_distinct_regions.txt  ./
+
+
+
+# make violin plots from multitissue (This doesn't have to be re-made as it doesn't involve overlapping of genes)
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+Specific1 <- read.table("Tissue_specific_SE_1percent_required_size.txt", header = FALSE)
+
+head(Specific1)
+
+library(ggplot2)
+
+Specific1 <- as.data.frame(Specific1)
+
+Specific1$V3 <- log10(Specific1$V2)
+
+p <- ggplot(Specific1, aes(x=V3, y=V1, fill=V1)) +
+
+geom_violin()
+
+p + stat_summary(fun=mean, geom="point", shape=23, size=2)
+
+
+
+
+
+Multi <- read.table("MultiTissue_SE_size_w_distinct_regions.txt", header = FALSE)
+
+head(Multi)
+
+Multi <- as.data.frame(Multi)
+
+Multi$V3 <- log10(Multi$V2)
+
+
+
+# Compare tissue-specific to its full distribution
+
+Craniofacial <- subset(Multi, V1 == 'Craniofacial')
+
+Heart <- subset(Multi, V1 == 'Heart')
+
+Spleen <- subset(Multi, V1 == 'Spleen')
+
+LeftVentricle <- subset(Multi, V1 == 'Left_Ventricle')
+
+FetalMuscle <- subset(Multi, V1 == 'Fetal_Muscle')
+
+Esophagus <- subset(Multi, V1 == 'Esophagus')
+
+AdrenalGland <- subset(Multi, V1 == 'Adrenal_Gland')
+
+Astrocytes <- subset(Multi, V1 == 'Astrocytes')
+
+Osteoblasts <- subset(Multi, V1 == 'Osteoblasts')
+
+Aorta <- subset(Multi, V1 == 'Aorta')
+
+Ovary <- subset(Multi, V1 == 'Ovary')
+
+
+
+CF_specific1 <- subset(Specific1, V1 == 'CF_specific')
+
+Heart_specific1 <- subset(Specific1, V1 == 'Heart_specific')
+
+Spleen_specific1 <- subset(Specific1, V1 == 'Spleen_specific')
+
+Left_Ventricle_specific1 <- subset(Specific1, V1 == 'Left_Ventricle_specific')
+
+Adrenal_Gland_specific1 <- subset(Specific1, V1 == 'Adrenal_Gland_specific')
+
+Fetal_Muscle_specific1 <- subset(Specific1, V1 == 'Fetal_Muscle_specific')
+
+Esophagus_specific1 <- subset(Specific1, V1 == 'Esophagus_specific')
+
+Astrocytes_specific1 <- subset(Specific1, V1 == 'Astrocytes_specific')
+
+Osteoblasts_specific1 <- subset(Specific1, V1 == 'Osteoblasts_specific')
+
+Aorta_specific1 <- subset(Specific1, V1 == 'Aorta_specific')
+
+Ovary_specific1 <- subset(Specific1, V1 == 'Ovary_specific')
+
+
+
+CF_compare1 <- wilcox.test(Craniofacial$V3, CF_specific1$V3, alternative="two.sided")
+
+Heart_compare1 <- wilcox.test(Heart$V3, Heart_specific1$V3, alternative="two.sided")
+
+Spleen_compare1 <- wilcox.test(Spleen$V3, Spleen_specific1$V3, alternative="two.sided")
+
+Left_Ventricle_compare1 <- wilcox.test(LeftVentricle$V3, Left_Ventricle_specific1$V3, alternative="two.sided")
+
+Adrenal_Gland_compare1 <- wilcox.test(AdrenalGland$V3, Adrenal_Gland_specific1$V3, alternative="two.sided")
+
+Fetal_Muscle_compare1 <- wilcox.test(FetalMuscle$V3, Fetal_Muscle_specific1$V3, alternative="two.sided")
+
+Esophagus_compare1 <- wilcox.test(Esophagus$V3, Esophagus_specific1$V3, alternative="two.sided")
+
+Astrocytes_compare1 <- wilcox.test(Astrocytes$V3, Astrocytes_specific1$V3, alternative="two.sided")
+
+Osteoblasts_compare1 <- wilcox.test(Osteoblasts$V3, Osteoblasts_specific1$V3, alternative="two.sided")
+
+Aorta_compare1 <- wilcox.test(Aorta$V3, Aorta_specific1$V3, alternative="two.sided")
+
+Ovary_compare1 <- wilcox.test(Ovary$V3, Ovary_specific1$V3, alternative="two.sided")
+
+
+
+CF_compare1 #p=2.2e-16 
+
+Heart_compare1 #p=2.2e-16 
+
+Spleen_compare1 #p=0.01422
+
+Left_Ventricle_compare1 #p=0.3228
+
+Adrenal_Gland_compare1 #p=0.2552
+
+Fetal_Muscle_compare1 #p=0.4331 
+
+Esophagus_compare1 #p=0.9732
+
+Astrocytes_compare1 #p=0.1396 
+
+Osteoblasts_compare1 #p=0.01142
+
+Aorta_compare1 #p=0.1392 
+
+Ovary_compare1 #p=0.3565
+
+
+
+library(dplyr)
+
+specific_summary <- group_by(Specific1, V1) %>%
+
+summarise(count=n(), median=median(V2), IQR=IQR(V2))
+
+
+
+multi_summary <- group_by(Multi, V1) %>%
+
+summarise(count=n(), median=median(V2), IQR=IQR(V2))
+
+
+
+# summary and p.value results to Tissue-specific_SE_size_compare_using_distinct_regions.xlsx 
+
+# didn't change much, 531 CF-specific instead of 530, but at least not random 1bp overlap
+
+
+######
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE
+
+
+
+export HGBED=../../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export TSSBED=../../gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+
+
+export HEART=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/heart/heart_SE_overall_distinct_10percent_merged_labeled.bed
+
+export FACE=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/CF/CF_SE_overall_distinct_10percent_merged_labeled.bed
+
+export SUPER=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/dbsuper/data/bed/hg19/dbSuper_all_SE_labeled.bed
+
+
+
+bedtools intersect -a $FACE -b $SUPER -f 0.01 -r -wa | uniq > CF_shared_with_dbSUPER_1percent_required.txt
+
+bedtools intersect -a $FACE -b $SUPER -f 0.01 -r -v -wa | uniq > CF_not_shared_with_dbSUPER_1percent_required.txt
+
+bedtools intersect -a CF_not_shared_with_dbSUPER_1percent_required.txt -b $HEART -f 0.01 -r -wa | uniq > CF_shared_only_with_heart_1percent_required.txt
+
+bedtools intersect -a CF_not_shared_with_dbSUPER_1percent_required.txt -b $HEART -f 0.01 -r -v -wa | uniq > CF_unique_1percent_required.txt
+
