@@ -1,0 +1,358 @@
+# For non-TSS encompassing:
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis/intersection_of_SE
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export HGBED=../../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export TSSBED=../../gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+
+
+bedtools intersect -a CF_unique_1percent_required.txt -b $TSSBED -v > Craniofacial-specific_non-encompassing_SE_regions.txt
+
+bedtools intersect -a CF_shared_with_dbSUPER_1percent_required.txt -b $TSSBED -v > CF_shared_with_dbSUPER_non-encompassing_SE_regions.txt
+
+bedtools intersect -a CF_shared_only_with_heart_1percent_required.txt -b $TSSBED -v > Embryonic_CF_heart_non-encompassing_SE_regions.txt
+
+
+
+cat $TSSBED | sort -k 1,1 -k 2,2n - | bedtools closest -a Craniofacial-specific_non-encompassing_SE_regions.txt -b - -io -t all -D a -k 2 > Craniofacial-specific_non-encompassing_SE_regions_distance_to_TSS.txt
+
+cat $TSSBED | sort -k 1,1 -k 2,2n - | bedtools closest -a CF_shared_with_dbSUPER_non-encompassing_SE_regions.txt -b - -io -t all -D a -k 2 > CF_shared_with_dbSUPER_non-encompassing_SE_regions_distance_to_TSS.txt
+
+cat $TSSBED | sort -k 1,1 -k 2,2n - | bedtools closest -a Embryonic_CF_heart_non-encompassing_SE_regions.txt -b - -io -t all -D a -k 2 > Embryonic_CF_heart_non-encompassing_SE_regions_distance_to_TSS.txt
+
+
+
+
+
+CF_specific_distance <- read.table("Craniofacial-specific_non-encompassing_SE_regions_distance_to_TSS.txt", header = FALSE)
+
+CF_non_specific_distance <- read.table("CF_shared_with_dbSUPER_non-encompassing_SE_regions_distance_to_TSS.txt", header = FALSE)
+
+
+
+CF_specific_distance$V12 <- abs(CF_specific_distance$V11)
+
+CF_non_specific_distance$V12 <- abs(CF_non_specific_distance$V11)
+
+
+
+CF_test <- ks.test(CF_specific_distance$V12, CF_non_specific_distance$V12, exact=NULL)
+
+
+
+CF_test
+
+# D = 0.15915, p-value = 9.766e-12
+
+
+
+CF_non_specific_distance$V13 <- log10(CF_non_specific_distance$V12)
+
+CF_specific_distance$V13 <- log10(CF_specific_distance$V12)
+
+
+
+CF_test <- ks.test(CF_specific_distance$V13, CF_non_specific_distance$V13, exact=NULL)
+
+#D = 0.15915, p-value = 9.766e-12
+
+
+
+median(CF_non_specific_distance$V13)
+
+median(CF_specific_distance$V13)
+
+
+
+
+
+a <- max(CF_non_specific_distance$V13)
+
+
+
+hist(CF_non_specific_distance$V13, breaks=100, xlim=c(0,a), ylim=c(0,120))
+
+abline(v=median(CF_non_specific_distance$V13), col="black")
+
+
+
+hist(CF_specific_distance$V13, breaks=100, col="red", add=TRUE)
+
+abline(v=median(CF_specific_distance$V13), col="red")
+
+
+
+## Disease ontology terms for nearest genes
+
+cfnear <- read.table("CF_specific_no_tss_overlap_nearest_list.txt", header=FALSE) 
+
+
+
+#cfnear <- as.data.frame(cfnear)
+
+
+
+cfnear$V2 <- removeVersion(cfnear$V1)
+
+
+
+cfnear$symbol <- mapIds(org.Hs.eg.db,
+
+                     keys=cfnear$V2,
+
+                     column="SYMBOL",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+cfnear$entrez <- mapIds(org.Hs.eg.db,
+
+                     keys=cfnear$V2,
+
+                     column="ENTREZID",
+
+                     keytype="ENSEMBL",
+
+                     multiVals="first")
+
+
+
+
+
+library(ggplot2)
+
+cfdgn <- enrichDGN(cfnear$entrez,
+
+              pvalueCutoff  = 0.05,
+
+              pAdjustMethod = "BH",
+
+              universe      = BG$entrez,
+
+              minGSSize     = 5,
+
+              maxGSSize     = 500,
+
+              qvalueCutoff  = 0.05,
+
+              readable      = FALSE)
+
+head(cfdgn)
+
+
+
+write.table(cfdgn, file = "cf_specific_nearest_TSS_disgenet.txt")
+
+#trimmed some repeated or close to p.adj=0.05
+
+# short_list_cf_specific_nearest_TSS_disgenet.txt
+
+cfx <- read.delim("short_list_cf_specific_nearest_TSS_disgenet.txt", header=TRUE)
+
+cfx$obs <- as.numeric(cfx$GeneRatio)
+
+cfx$expect <- as.numeric(cfx$BgRatio)
+
+cfx$enrichment <- cfx$obs/cfx$expect
+
+cfx$neglog10 <- -log10(cfx$p.adjust)
+
+cfx$Description <- reorder(cfx$Description, cfx$neglog10)
+
+
+
+ggplot(cfx, aes(x=Description, y=neglog10)) +
+
+  geom_point(aes (color=enrichment, size=Count)) +   # Draw points
+
+  scale_color_gradient(low="purple", high="red") +
+
+  geom_segment(aes(x=Description, 
+
+                   xend=Description, 
+
+                   y=min(neglog10), 
+
+                   yend=max(neglog10)), 
+
+               linetype="dashed", 
+
+               size=0.1) +   # Draw dashed lines
+
+  labs(title="DisGeNET Disease Ontology Terms", 
+
+       subtitle="from Genes Nearest Non-overlapping CF-specific SEs") +  
+
+  coord_flip()
+
+
+
+ego <- enrichGO(gene         = cfnear$V2,
+
+                OrgDb         = org.Hs.eg.db,
+
+                keyType       = 'ENSEMBL',
+
+                ont           = "BP",
+
+                pAdjustMethod = "BH",
+
+                pvalueCutoff  = 0.05,
+
+                qvalueCutoff  = 0.05)
+
+                
+
+write.table(ego, file = "cf_specific_nearest_TSS_GO_BP.txt")
+
+cfbp <- read.delim("cf_specific_nearest_TSS_GO_BP.txt", header=TRUE)
+
+cfbp$obs <- as.numeric(cfbp$GeneRatio)
+
+cfbp$expect <- as.numeric(cfbp$BgRatio)
+
+cfbp$enrichment <- cfbp$obs/cfbp$expect
+
+cfbp$neglog10 <- -log10(cfbp$p.adjust)
+
+cfbp$Description <- reorder(cfbp$Description, cfbp$neglog10)
+
+
+
+ggplot(head(n=15,cfbp), aes(x=Description, y=neglog10)) +
+
+  geom_point(aes (color=enrichment, size=Count)) +   # Draw points
+
+  scale_color_gradient(low="purple", high="red") +
+
+  geom_segment(aes(x=Description, 
+
+                   xend=Description, 
+
+                   y=min(neglog10), 
+
+                   yend=max(neglog10)), 
+
+               linetype="dashed", 
+
+               size=0.1) +   # Draw dashed lines
+
+  labs(title="Biological Process Gene Ontology Terms", 
+
+       subtitle="from Genes Nearest Non-overlapping CF-specific SEs") +  
+
+  coord_flip()
+
+
+
+# Shuffle non-encompassing locations to determine distances to TSS in randomized non-coding regions
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export TSSBED=../../gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+export GENOME=~/GENOME/hg19/Homo_sapiens/UCSC/hg19/Sequence/Chromosomes/hg19.chrom.sizes
+
+for i in {1..1000}
+
+do
+
+    bedtools shuffle -i Craniofacial-specific_non-encompassing_SE_regions.txt -g $GENOME -excl $TSSBED  > shuffle_biv_$i
+
+    cat shuffle_biv_$i | sort -k 1,1 -k 2,2n - > shuffle_biv_$i.sorted
+
+    cat $TSSBED | sort -k 1,1 -k 2,2n - | bedtools closest -a shuffle_biv_$i.sorted -b - -io -t all -D a -k 2 >> distance_to_TSS_from_randomized.txt
+
+done
+
+
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+
+
+CF_specific_distance <- read.table("Craniofacial-specific_non-encompassing_SE_regions_distance_to_TSS.txt", header = FALSE)
+
+CF_non_specific_distance <- read.table("CF_shared_with_dbSUPER_non-encompassing_SE_regions_distance_to_TSS.txt", header = FALSE)
+
+CF_random <- read.table("distance_to_TSS_from_randomized.txt", header=FALSE)
+
+
+
+CF_specific_distance$V12 <- abs(CF_specific_distance$V11)
+
+CF_non_specific_distance$V12 <- abs(CF_non_specific_distance$V11)
+
+CF_random$V12 <- abs(CF_random$V11)
+
+
+
+# Two-sample Kolmogorov-Smirnov test
+
+CF_test <- ks.test(CF_specific_distance$V12, CF_non_specific_distance$V12, exact=NULL)
+
+# D = 0.15915, p-value = 9.766e-12
+
+CF_test <- ks.test(CF_specific_distance$V12, CF_random$V12, exact=NULL)
+
+# D = 0.21308, p-value < 2.2e-16
+
+CF_test <- ks.test(CF_non_specific_distance$V12, CF_random$V12, exact=NULL)
+
+# D = 0.31038, p-value < 2.2e-16
+
+
+
+median(CF_non_specific_distance$V12)
+
+# 85693
+
+median(CF_specific_distance$V12)
+
+# 132864
+
+median(CF_random$V12)
+
+# 216055.5
+
+
+
+CF_specific_distance$V13 <- log10(CF_specific_distance$V12)
+
+CF_non_specific_distance$V13 <- log10(CF_non_specific_distance$V12)
+
+CF_random$V13 <- log10(CF_random$V12)
+
+
+
+
+
+a <- max(CF_random$V13)
+
+
+
+hist(CF_random$V13, breaks=100, xlim=c(0,a), ylim=c(0,40000))
+
+abline(v=median(CF_random$V13), col="black")
+
+
+
+hist(CF_specific_distance$V13, breaks=100, col="red", add=TRUE)
+
+abline(v=median(CF_specific_distance$V13), col="red")
+
+
+
+hist(CF_non_specific_distance$V13, breaks=100, col="blue", add=TRUE)
+
+abline(v=median(CF_non_specific_distance$V13), col="blue")
+
