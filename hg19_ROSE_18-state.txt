@@ -1,0 +1,1107 @@
+# ROSE 18_state hg19
+## 1 ## Convert these files in /home/FCAM/jcotney/archive/hubs/CRANIOFACIAL_HUB/hg19 from bigBed to bed and move to ~/ANALYSIS/ROSE/hg19/18_state
+
+#!/bin/bash
+#SBATCH --job-name=hg19_ROSE_step1
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 3
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=12G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o hg19_ROSE_step1_%j.out
+#SBATCH -e hg19_ROSE_step1_%j.err
+
+cd ~/ANALYSIS/ROSE/hg19/18_state/
+for base in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108
+do
+	echo -e $base >> base_list.txt
+done
+
+cat base_list.txt | awk '{print "sort /linuxshare/users/jcotney/ANALYSIS/ChIP/ChromHMM/CHROMHMM_HUMAN_CRANIOFACIAL/18State_joint/"$1"_18state_dense.bed > ~/ANALYSIS/ROSE/hg19/18_state/"$1"_18state_dense_sorted.bed"}' > sort_beds.sh
+chmod +x *.sh
+./sort_beds.sh
+
+## 2 ## Select some of the states to create .rose_states.bed and .gff
+
+cat base_list.txt | awk '{print "grep -e 1_TssA -e 2_TssFlnk -e 3_TssFlnkU -e 4_TssFlnkD -e 7_EnhG1 -e 8_EnhG2 -e 9_EnhA1 -e 10_EnhA2 -e 11_EnhWk -e 14_TssBiv -e 15_EnhBiv "$1"_18state_dense_sorted.bed > "$1"_18state_dense_sorted_rose_states.bed"}' >> make_rose_state_beds.sh
+	chmod +x make_rose_state_beds.sh
+	./make_rose_state_beds.sh	
+
+ls -1 *_rose_states.bed > rose_bed_list.txt
+for rosebed in `cat rose_bed_list.txt`
+do 
+	cat $rosebed| awk '{print $1"\t"$4"_"$1"_"$2"_"$3"\t"$4"\t"$2"\t"$3"\t"$5"\t"$6"\t.\t"$4"_"$1"_"$2"_"$3}' > $rosebed.gff
+done 
+
+# should change order from this:
+# chr10	0	3106200	18_Quies	0	.	0	3106200	255,255,255
+# to this:
+# chr1	19_DNase_chr1_237400_237600	19_DNase	237400	237600	0	.	.	19_DNase_chr1_237400_237600
+
+# clean up by renaming .bed.gff simply .gff
+cat base_list.txt | awk '{print "mv "$1"_18state_dense_sorted_rose_states.bed.gff "$1"_18state_dense_rose_states.gff"}' > rename.sh
+chmod +x *.sh
+./rename.sh
+		
+
+#!/bin/bash
+#SBATCH --job-name=hg19_ROSE_step2
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 16
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=64G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o hg19_ROSE_step2_%j.out
+#SBATCH -e hg19_ROSE_step2_%j.err
+
+
+## 3 ## locate correct bams
+
+# They are already sorted and indexed
+# create ROSE_file_list.txt and write rose.sh script to run
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state
+
+cat base_list.txt | awk '{print "/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state/"$1"_18state_dense_rose_states.gff /linuxshare/users/jcotney/ANALYSIS/ChIP/Human/align/"$1"-H3K27ac_norm_sorted.bam /linuxshare/users/jcotney/ANALYSIS/ChIP/Human/align/"$1"-Input_norm_sorted.bam"}' >> hg19_ROSE_file_list.txt
+
+
+## 4 ##
+# make hg19_rose.sh
+module load python/2.7.14
+cat hg19_ROSE_file_list.txt | awk '{print "python ~/TOOLS/young_computation-rose-1a9bb86b5464/ROSE_main.py -g hg19 -i "$1" -r "$2" -o ~/ANALYSIS/ROSE/hg19/18_state -c "$3}' > hg19_rose.sh
+chmod +x *.sh
+
+module load R/3.4.1
+module load samtools/0.1.19
+cp hg19_rose.sh ~/TOOLS/young_computation-rose-1a9bb86b5464/
+cd ~/TOOLS/young_computation-rose-1a9bb86b5464/
+./hg19_rose.sh
+
+# When finished create bed for each tissue/timepoint
+ls *_SuperEnhancers.table.txt | awk '{print "cat "$1" | awk \x27{print \$2\"\t\"\$3\"\t\"\$4\"\t\"\$1\"\t0\t.\t\"\$3\"\t\"\$4\"\t204,153,0\"}\x27 | tail -n +7 > "$1"_Superenhancer.bed"}' | sed 's/_18state_dense_sorted_rose_states_SuperEnhancers.table.txt//g' > make_SuperEnhancer_bed.sh
+chmod +x *.sh
+./make_SuperEnhancer_bed.sh
+ls *_Superenhancer.bed > Superenhancer_bed_list.txt
+
+sed -i -e '1s/^/track name=\"CS13-12383_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS13-12383_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed 
+sed -i -e '1s/^/track name=\"CS13-12690_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS13-12690_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS13-12829_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS13-12829_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS13-12830_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS13-12830_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS13-12877_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS13-12877_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS14-12408_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS14-12408_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS14-12709_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS14-12709_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS14-12913_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS14-12913_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS15-13000_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS15-13000_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS15-13019_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS15-13019_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS15-13128_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS15-13128_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS17-12191_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS17-12191_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS17-12331_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS17-12331_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS17-12341_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS17-12341_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS17-12611_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS17-12611_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"CS20-12104_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' CS20-12104_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+sed -i -e '1s/^/track name=\"F2-N2108_18state\" description=\"hg19_embryonic_craniofacial_Superenhancers_IDd_by_ROSE\" visibility=2 itemRgb=\"On\"\n/' F2-N2108_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed
+
+#########
+
+## 5 ## Edit with Track names and itemRgb="On"
+# track name="$file" description="hg19_embryonic_craniofacial_Superenhancers_ID'd_by_ROSE" visibility=2 itemRgb="On"
+
+###
+cp CS13-12383_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS13-12690_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS13-12829_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS13-12830_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS13-12877_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS14-12408_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS14-12709_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS14-12913_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS15-13000_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS15-13019_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS15-13128_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS17-12191_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS17-12331_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS17-12341_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS17-12611_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp CS20-12104_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+cp F2-N2108_18state_dense_rose_states_SuperEnhancers.table.txt_Superenhancer.bed /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/
+
+### Web address for UCSC Browser
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS13-12383_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS13-12690_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS13-12829_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS13-12830_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS13-12877_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS14-12408_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS14-12709_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS14-12913_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS15-13000_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS15-13019_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS15-13128_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS17-12191_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS17-12331_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS17-12341_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS17-12611_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/CS20-12104_18state_dense_rose.bed
+http://graveleylab.cam.uchc.edu/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/F2-N2108_18state_dense_rose.bed
+
+### Superenhancers per sample:
+1559 CS13-12383_18state_dense_rose.bed
+1362 CS13-12690_18state_dense_rose.bed
+1536 CS13-12829_18state_dense_rose.bed
+1467 CS13-12830_18state_dense_rose.bed
+1624 CS13-12877_18state_dense_rose.bed
+1255 CS14-12408_18state_dense_rose.bed
+1020 CS14-12709_18state_dense_rose.bed
+1402 CS14-12913_18state_dense_rose.bed
+1122 CS15-13000_18state_dense_rose.bed
+1401 CS15-13019_18state_dense_rose.bed
+1432 CS15-13128_18state_dense_rose.bed
+1541 CS17-12191_18state_dense_rose.bed
+1352 CS17-12331_18state_dense_rose.bed
+1497 CS17-12341_18state_dense_rose.bed
+1204 CS17-12611_18state_dense_rose.bed
+1303 CS20-12104_18state_dense_rose.bed
+1894 F2-N2108_18state_dense_rose.bed
+
+### jaccard comparison
+# Sort files
+
+#!/bin/bash
+#SBATCH --job-name=ROSE_sort
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 16
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=64G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o ROSE_sort_%j.out
+#SBATCH -e ROSE_sort_%j.err
+
+cd /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE
+
+for base in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "sort -k 1,1 -k 2,2n "$base"_18state_dense_rose.bed > "$base"_18state_dense_rose_sorted.bed" >> ROSE_sort.sh
+done
+
+# set up comparisons
+for base in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a "$base"_18state_dense_rose_sorted.bed \
+        -b "$base"_18state_dense_rose_sorted.bed > "$base"_self.out" >> self_jaccard.sh
+done
+
+for a in CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS13-12383_18state_dense_rose_sorted.bed \
+        -b "$a"_18state_dense_rose_sorted.bed > CS13-12383_v_"$a".out" >> a_comparisons_jaccard.sh
+done
+
+for b in CS13-12383 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS13-12690_18state_dense_rose_sorted.bed \
+        -b "$b"_18state_dense_rose_sorted.bed > CS13-12690_v_"$b".out" >> b_comparisons_jaccard.sh
+done
+
+for c in CS13-12383 CS13-12690 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS13-12829_18state_dense_rose_sorted.bed \
+        -b "$c"_18state_dense_rose_sorted.bed > CS13-12829_v_"$c".out" >> c_comparisons_jaccard.sh
+done
+
+for d in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS13-12830_18state_dense_rose_sorted.bed \
+        -b "$d"_18state_dense_rose_sorted.bed > CS13-12830_v_"$d".out" >> d_comparisons_jaccard.sh
+done
+
+for e in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS13-12877_18state_dense_rose_sorted.bed \
+        -b "$e"_18state_dense_rose_sorted.bed > CS13-12877_v_"$e".out" >> e_comparisons_jaccard.sh
+done
+
+for f in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS14-12408_18state_dense_rose_sorted.bed \
+        -b "$f"_18state_dense_rose_sorted.bed > CS14-12408_v_"$f".out" >> f_comparisons_jaccard.sh
+done
+
+for g in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS14-12709_18state_dense_rose_sorted.bed \
+        -b "$g"_18state_dense_rose_sorted.bed > CS14-12709_v_"$g".out" >> g_comparisons_jaccard.sh
+done
+
+for h in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS14-12913_18state_dense_rose_sorted.bed \
+        -b "$h"_18state_dense_rose_sorted.bed > CS14-12913_v_"$h".out" >> h_comparisons_jaccard.sh
+done
+
+for i in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS15-13000_18state_dense_rose_sorted.bed \
+        -b "$i"_18state_dense_rose_sorted.bed > CS15-13000_v_"$i".out" >> i_comparisons_jaccard.sh
+done
+
+for j in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS15-13019_18state_dense_rose_sorted.bed \
+        -b "$j"_18state_dense_rose_sorted.bed > CS15-13019_v_"$j".out" >> j_comparisons_jaccard.sh
+done
+
+for k in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS15-13128_18state_dense_rose_sorted.bed \
+        -b "$k"_18state_dense_rose_sorted.bed > CS15-13128_v_"$k".out" >> k_comparisons_jaccard.sh
+done
+
+for l in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS17-12191_18state_dense_rose_sorted.bed \
+        -b "$l"_18state_dense_rose_sorted.bed > CS17-12191_v_"$l".out" >> l_comparisons_jaccard.sh
+done
+
+for m in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS17-12331_18state_dense_rose_sorted.bed \
+        -b "$m"_18state_dense_rose_sorted.bed > CS17-12331_v_"$m".out" >> m_comparisons_jaccard.sh
+done
+
+for n in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS17-12341_18state_dense_rose_sorted.bed \
+        -b "$n"_18state_dense_rose_sorted.bed > CS17-12341_v_"$n".out" >> n_comparisons_jaccard.sh
+done
+
+for o in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS17-12611_18state_dense_rose_sorted.bed \
+        -b "$o"_18state_dense_rose_sorted.bed > CS17-12611_v_"$o".out" >> o_comparisons_jaccard.sh
+done
+
+for p in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108;
+do
+	echo "bedtools jaccard \
+        -a CS20-12104_18state_dense_rose_sorted.bed \
+        -b "$p"_18state_dense_rose_sorted.bed > CS20-12104_v_"$p".out" >> p_comparisons_jaccard.sh
+done
+
+#!/bin/bash
+#SBATCH --job-name=ROSE_jaccard
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 16
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=64G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o ROSE_jaccard_%j.out
+#SBATCH -e ROSE_jaccard_%j.err
+
+module load BEDtools/2.29.0
+module load libpng/12-1.2.50-10
+
+cd /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE
+./a_comparisons_jaccard.sh
+./b_comparisons_jaccard.sh
+./c_comparisons_jaccard.sh
+./d_comparisons_jaccard.sh
+./e_comparisons_jaccard.sh
+./f_comparisons_jaccard.sh
+./g_comparisons_jaccard.sh
+./h_comparisons_jaccard.sh
+./i_comparisons_jaccard.sh
+./j_comparisons_jaccard.sh
+./k_comparisons_jaccard.sh
+./l_comparisons_jaccard.sh
+./m_comparisons_jaccard.sh
+./n_comparisons_jaccard.sh
+./o_comparisons_jaccard.sh
+./p_comparisons_jaccard.sh
+./self_jaccard.sh
+
+#!/bin/bash
+#SBATCH --job-name=hg19_ROSE_liftOver_prep
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 8
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=32G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o liftover_prep_%j.out
+#SBATCH -e liftover_prep_%j.err
+
+
+module load kent-tools/1.04.00  
+module load libpng/12-1.2.50-10
+module load BEDtools/2.29.0
+
+
+# merge stages CS13-CS17 by state and mouse embryonic states as their own by state
+cd ~/ANALYSIS/ROSE/hg19/18_state
+for base in CS13-12383 CS13-12690 CS13-12829 CS13-12830 CS13-12877 CS14-12408 CS14-12709 CS14-12913 CS15-13000 CS15-13019 CS15-13128 CS17-12191 CS17-12331 CS17-12341 CS17-12611 CS20-12104 F2-N2108
+do
+	echo "cat /tgc/TGCore_User_Data/WebData/cotney/hubs/HoxA_4C/ROSE/18_state_ROSE/"$base"_18state_dense_rose_sorted.bed | awk '{print \$1\"\t\"\$2\"\t\"\$3\"\t\hg19_"$base"_CF\"}' > "$base"_rose_sorted4.bed" >> make_sorted4.sh
+done
+chmod +x *.sh
+./make_sorted4.sh
+
+cat CS13*_rose_sorted4.bed > CS13_merged_rose.bed 
+sort -k 1,1 -k 2,2n CS13_merged_rose.bed > CS13_merged_rose_sorted.bed
+cat CS14*_rose_sorted4.bed > CS14_merged_rose.bed 
+sort -k 1,1 -k 2,2n CS14_merged_rose.bed > CS14_merged_rose_sorted.bed
+cat CS15*_rose_sorted4.bed > CS15_merged_rose.bed 
+sort -k 1,1 -k 2,2n CS15_merged_rose.bed > CS15_merged_rose_sorted.bed
+cat CS17*_rose_sorted4.bed > CS17_merged_rose.bed 
+sort -k 1,1 -k 2,2n CS17_merged_rose.bed > CS17_merged_rose_sorted.bed
+
+
+
+
+bedtools merge -c 4,4 -o count,distinct -i CS13_merged_rose_sorted.bed > CS13_CF_merged.stats
+bedtools merge -c 4,4 -o count,distinct -i CS14_merged_rose_sorted.bed > CS14_CF_merged.stats
+bedtools merge -c 4,4 -o count,distinct -i CS15_merged_rose_sorted.bed > CS15_CF_merged.stats
+bedtools merge -c 4,4 -o count,distinct -i CS17_merged_rose_sorted.bed > CS17_CF_merged.stats
+
+cat CS13_CF_merged.stats | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > CS13_CF_merged_labelled.bed
+cat CS14_CF_merged.stats | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > CS14_CF_merged_labelled.bed
+cat CS15_CF_merged.stats | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > CS15_CF_merged_labelled.bed
+cat CS17_CF_merged.stats | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > CS17_CF_merged_labelled.bed
+
+cat CS20-12104_rose_sorted4.bed | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > CS20_CF_labelled.bed
+cat F2-N2108_rose_sorted4.bed | awk '{print $1"\t"$2"\t"$3"\thg19:"$1":"$2"-"$3}' > F2_CF_labelled.bed
+
+
+# merged stats for hg19, example 
+wc -l CS17_CF_merged.stats
+cat CS17_CF_merged.stats | grep "CS17-12191" | grep "CS17-12331" | grep "CS17-12341" | grep "CS17-12611" | wc -l 
+cat CS17_CF_merged.stats | grep "CS17-12191" | grep -v "CS17-12331" | grep -v "CS17-12341" | grep "CS17-12611"  | wc -l 
+cat CS17_CF_merged.stats | grep "CS17-12331" | grep -v "CS17-12191" | grep -v "CS17-12341" | grep "CS17-12611"  | wc -l 
+cat CS17_CF_merged.stats | grep "CS17-12341" | grep -v "CS17-12191" | grep -v "CS17-12331" | grep "CS17-12611"  | wc -l 
+cat CS17_CF_merged.stats | grep "CS17-12611" | grep -v "CS17-12191" | grep -v "CS17-12331" | grep "CS17-12341"  | wc -l 
+
+# liftOver - Move annotations from one assembly to another
+# minMatch set to 0.1, as recommended for cross-species comparison (what the browser liftOver tool defaults to)
+
+#!/bin/bash
+#SBATCH --job-name=hg19_ROSE_liftOver
+#SBATCH -N 1
+#SBATCH -n 1
+#SBATCH -c 8
+#SBATCH --partition=general
+#SBATCH --qos=general
+#SBATCH --mem=32G
+#SBATCH --mail-type=BEGIN,END
+#SBATCH --mail-user=awilderman@uchc.edu
+#SBATCH -o liftover_%j.out
+#SBATCH -e liftover_%j.err
+
+
+module load kent-tools/1.04.00  
+module load libpng/12-1.2.50-10
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state
+liftOver CS13_CF_merged_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13_hg19_cf_se_regions.merge_to_mm10.bed CS13_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+liftOver CS14_CF_merged_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS14_hg19_cf_se_regions.merge_to_mm10.bed CS14_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+liftOver CS15_CF_merged_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS15_hg19_cf_se_regions.merge_to_mm10.bed CS15_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+liftOver CS17_CF_merged_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS17_hg19_cf_se_regions.merge_to_mm10.bed CS17_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+liftOver CS20_CF_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS20_hg19_cf_se_regions_to_mm10.bed CS20_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+liftOver F2_CF_labelled.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain F2_hg19_cf_se_regions_to_mm10.bed F2_hg19_cf_se_to_mm10.unMapped -minMatch=0.1
+
+# liftover for hg19 individual reps
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state
+
+liftOver CS13-12383_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13-12383_CF_SE_to_mm10.bed CS13-12383_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS13-12690_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13-12690_CF_SE_to_mm10.bed CS13-12690_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS13-12829_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13-12829_CF_SE_to_mm10.bed CS13-12829_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS13-12830_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13-12830_CF_SE_to_mm10.bed CS13-12830_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS13-12877_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS13-12877_CF_SE_to_mm10.bed CS13-12877_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS14-12408_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS14-12408_CF_SE_to_mm10.bed CS14-12408_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS14-12709_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS14-12709_CF_SE_to_mm10.bed CS14-12709_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS14-12913_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS14-12913_CF_SE_to_mm10.bed CS14-12913_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS15-13000_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS15-13000_CF_SE_to_mm10.bed CS15-13000_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS15-13019_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS15-13019_CF_SE_to_mm10.bed CS15-13019_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS15-13128_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS15-13128_CF_SE_to_mm10.bed CS15-13128_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS17-12191_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS17-12191_CF_SE_to_mm10.bed CS17-12191_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS17-12331_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS17-12331_CF_SE_to_mm10.bed CS17-12331_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS17-12341_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS17-12341_CF_SE_to_mm10.bed CS17-12341_CF_SE_to_mm10.unMapped -minMatch=0.1
+liftOver CS17-12611_rose_sorted4.bed /home/FCAM/awilderman/GENOME/liftOver/hg19ToMm10.over.chain CS17-12611_CF_SE_to_mm10.bed CS17-12611_CF_SE_to_mm10.unMapped -minMatch=0.1
+
+# count lines
+
+for file in CS13-12383_CF_SE_to_mm10.bed \
+CS13-12690_CF_SE_to_mm10.bed \
+CS13-12829_CF_SE_to_mm10.bed \
+CS13-12830_CF_SE_to_mm10.bed \
+CS13-12877_CF_SE_to_mm10.bed \
+CS14-12408_CF_SE_to_mm10.bed \
+CS14-12709_CF_SE_to_mm10.bed \
+CS14-12913_CF_SE_to_mm10.bed \
+CS15-13000_CF_SE_to_mm10.bed \
+CS15-13019_CF_SE_to_mm10.bed \
+CS15-13128_CF_SE_to_mm10.bed \
+CS17-12191_CF_SE_to_mm10.bed \
+CS17-12331_CF_SE_to_mm10.bed \
+CS17-12341_CF_SE_to_mm10.bed \
+CS17-12611_CF_SE_to_mm10.bed;
+do
+    wc -l $file
+done
+
+######
+
+# Compare mouse (reciprocally lifted to guarantee that the locus is present in both human and mouse) SE to human (reciprocally lifted...) SE
+
+
+# How do the human 18-state superenhancers identify with the 25-state?
+
+module load libpng/12-1.2.50-10
+module load BEDtools/2.29.0
+
+# calculate percent overlap of 18-state superenhancers to create distinct list like with 25-state
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state/hg19_CF_SE_to_mm10/hg19_CF_SE_to_mm10_to_hg19
+
+bedtools intersect -a CS13-12383_CF_SE_to_mm10_to_hg19.bed -b CS13-12690_CF_SE_to_mm10_to_hg19.bed \
+CS13-12829_CF_SE_to_mm10_to_hg19.bed \
+CS13-12830_CF_SE_to_mm10_to_hg19.bed \
+CS13-12877_CF_SE_to_mm10_to_hg19.bed \
+-wao > CS13_18-state_intersect_list.txt
+
+bedtools intersect -a CS13-12690_CF_SE_to_mm10_to_hg19.bed -b CS13-12829_CF_SE_to_mm10_to_hg19.bed \
+CS13-12830_CF_SE_to_mm10_to_hg19.bed \
+CS13-12877_CF_SE_to_mm10_to_hg19.bed \
+CS13-12383_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS13_18-state_intersect_list.txt
+
+bedtools intersect -a CS13-12829_CF_SE_to_mm10_to_hg19.bed -b CS13-12830_CF_SE_to_mm10_to_hg19.bed \
+CS13-12877_CF_SE_to_mm10_to_hg19.bed \
+CS13-12383_CF_SE_to_mm10_to_hg19.bed \
+CS13-12690_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS13_18-state_intersect_list.txt
+
+bedtools intersect -a CS13-12830_CF_SE_to_mm10_to_hg19.bed -b CS13-12877_CF_SE_to_mm10_to_hg19.bed \
+CS13-12383_CF_SE_to_mm10_to_hg19.bed \
+CS13-12690_CF_SE_to_mm10_to_hg19.bed \
+CS13-12829_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS13_18-state_intersect_list.txt
+
+bedtools intersect -a CS13-12877_CF_SE_to_mm10_to_hg19.bed -b CS13-12383_CF_SE_to_mm10_to_hg19.bed \
+CS13-12690_CF_SE_to_mm10_to_hg19.bed \
+CS13-12829_CF_SE_to_mm10_to_hg19.bed \
+CS13-12830_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS13_18-state_intersect_list.txt
+
+cat CS13_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS13_18_state_SE_0percent_intersect.bed
+
+cat CS13_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS13_18_state_CF_SE_intersect_report.txt
+
+cat CS13_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS13_18_state_CF_SE_100percent_intersect_list.txt
+
+cat CS13_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS13_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat CS13_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS13_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat CS13_18_state_SE_0percent_intersect.bed CS13_18_state_CF_SE_100percent_intersect_list.txt CS13_18_state_CF_SE_10percent_intersect_list.txt CS13_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#5260
+
+
+bedtools intersect -a CS14-12408_CF_SE_to_mm10_to_hg19.bed -b CS14-12709_CF_SE_to_mm10_to_hg19.bed \
+CS14-12913_CF_SE_to_mm10_to_hg19.bed \
+-wao > CS14_18-state_intersect_list.txt
+
+bedtools intersect -a CS14-12709_CF_SE_to_mm10_to_hg19.bed -b CS14-12913_CF_SE_to_mm10_to_hg19.bed \
+CS14-12408_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS14_18-state_intersect_list.txt
+
+bedtools intersect -a CS14-12913_CF_SE_to_mm10_to_hg19.bed -b CS14-12408_CF_SE_to_mm10_to_hg19.bed \
+CS14-12709_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS14_18-state_intersect_list.txt
+
+cat CS14_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS14_18_state_SE_0percent_intersect.bed
+
+cat CS14_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS14_18_state_CF_SE_intersect_report.txt
+
+cat CS14_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS14_18_state_CF_SE_100percent_intersect_list.txt
+
+cat CS14_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS14_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat CS14_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS14_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat CS14_18_state_SE_0percent_intersect.bed CS14_18_state_CF_SE_100percent_intersect_list.txt CS14_18_state_CF_SE_10percent_intersect_list.txt CS14_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#2747
+
+bedtools intersect -a CS15-13000_CF_SE_to_mm10_to_hg19.bed -b CS15-13019_CF_SE_to_mm10_to_hg19.bed \
+CS15-13128_CF_SE_to_mm10_to_hg19.bed \
+-wao > CS15_18-state_intersect_list.txt
+
+bedtools intersect -a CS15-13019_CF_SE_to_mm10_to_hg19.bed -b CS15-13128_CF_SE_to_mm10_to_hg19.bed \
+CS15-13000_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS15_18-state_intersect_list.txt
+
+bedtools intersect -a CS15-13128_CF_SE_to_mm10_to_hg19.bed -b CS15-13000_CF_SE_to_mm10_to_hg19.bed \
+CS15-13019_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS15_18-state_intersect_list.txt
+
+cat CS15_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS15_18_state_SE_0percent_intersect.bed
+
+cat CS15_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS15_18_state_CF_SE_intersect_report.txt
+
+cat CS15_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS15_18_state_CF_SE_100percent_intersect_list.txt
+
+cat CS15_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS15_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat CS15_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS15_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat CS15_18_state_SE_0percent_intersect.bed CS15_18_state_CF_SE_100percent_intersect_list.txt CS15_18_state_CF_SE_10percent_intersect_list.txt CS15_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#3166
+
+bedtools intersect -a CS17-12191_CF_SE_to_mm10_to_hg19.bed -b CS17-12331_CF_SE_to_mm10_to_hg19.bed \
+CS17-12341_CF_SE_to_mm10_to_hg19.bed \
+CS17-12611_CF_SE_to_mm10_to_hg19.bed \
+-wao > CS17_18-state_intersect_list.txt
+
+bedtools intersect -a CS17-12331_CF_SE_to_mm10_to_hg19.bed -b CS17-12341_CF_SE_to_mm10_to_hg19.bed \
+CS17-12611_CF_SE_to_mm10_to_hg19.bed \
+CS17-12191_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS17_18-state_intersect_list.txt
+
+bedtools intersect -a CS17-12341_CF_SE_to_mm10_to_hg19.bed -b CS17-12611_CF_SE_to_mm10_to_hg19.bed \
+CS17-12191_CF_SE_to_mm10_to_hg19.bed \
+CS17-12331_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS17_18-state_intersect_list.txt
+
+bedtools intersect -a CS17-12611_CF_SE_to_mm10_to_hg19.bed -b CS17-12191_CF_SE_to_mm10_to_hg19.bed \
+CS17-12331_CF_SE_to_mm10_to_hg19.bed \
+CS17-12341_CF_SE_to_mm10_to_hg19.bed \
+-wao >> CS17_18-state_intersect_list.txt
+
+cat CS17_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > CS17_18_state_SE_0percent_intersect.bed
+
+cat CS17_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > CS17_18_state_CF_SE_intersect_report.txt
+
+cat CS17_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > CS17_18_state_CF_SE_100percent_intersect_list.txt
+
+cat CS17_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS17_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat CS17_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > CS17_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat CS17_18_state_SE_0percent_intersect.bed CS17_18_state_CF_SE_100percent_intersect_list.txt CS17_18_state_CF_SE_10percent_intersect_list.txt CS17_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#3698
+
+# intersect_among_stages.sh
+
+# distinct superenhancers among stages
+
+# convert CS20 and F2 bed files to bed3 format
+
+cat CS20_hg19_cf_se_regions.merge_to_mm10_to_hg19.bed | cut -f 1-3 > CS20-12104_CF_SE_to_mm10_to_hg19.bed3
+
+cat F2_hg19_cf_se_regions.merge_to_mm10_to_hg19.bed | cut -f 1-3 > F2-N2108_CF_SE_to_mm10_to_hg19.bed3
+
+
+
+bedtools intersect -a CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS20-12104_CF_SE_to_mm10_to_hg19.bed3 \
+F2-N2108_CF_SE_to_mm10_to_hg19.bed3 \
+-wao  > CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS20-12104_CF_SE_to_mm10_to_hg19.bed3 \
+F2-N2108_CF_SE_to_mm10_to_hg19.bed3 \
+CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS20-12104_CF_SE_to_mm10_to_hg19.bed3 \
+F2-N2108_CF_SE_to_mm10_to_hg19.bed3 \
+CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b CS20-12104_CF_SE_to_mm10_to_hg19.bed3 \
+F2-N2108_CF_SE_to_mm10_to_hg19.bed3 \
+CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a CS20-12104_CF_SE_to_mm10_to_hg19.bed3 -b F2-N2108_CF_SE_to_mm10_to_hg19.bed3 \
+CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a F2-N2108_CF_SE_to_mm10_to_hg19.bed3 -b CS13_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS14_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS15_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS17_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+CS20-12104_CF_SE_to_mm10_to_hg19.bed3 \
+-wao >> CF_18-state_intersect_list_10.txt
+
+cat CF_18-state_intersect_list_10.txt | awk '{if($8==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > 18_state_CF_SE_0percent_intersect.bed
+
+cat CF_18-state_intersect_list_10.txt | awk '{if($8>0) print $0}' | awk '{print $0"\t"$8/($3-$2)}' > 18_state_CF_SE_intersect_report.txt
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > 18_state_CF_SE_100percent_intersect_list.txt
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9<1 && $9>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > 18_state_CF_SE_10percent_intersect_list.txt 
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > 18_state_CF_SE_under10percent_intersect_list.txt 
+
+cat 18_state_CF_SE_0percent_intersect.bed 18_state_CF_SE_100percent_intersect_list.txt 18_state_CF_SE_10percent_intersect_list.txt 18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > 18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+bedtools merge -i 18_state_CF_SE_distinct_list_10percent_cutoff.bed > 18_state_CF_SE_overall_distinct_10percent_merged.bed
+
+wc -l 18_state_CF_SE_overall_distinct_10percent_merged.bed
+
+#2800 
+
+
+export TWENTYFIVEDIR=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/condensed_analysis/CF
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state/hg19_CF_SE_to_mm10/hg19_CF_SE_to_mm10_to_hg19
+bedtools intersect -a 18_state_CF_SE_overall_distinct_10percent_merged.bed -b $TWENTYFIVEDIR/CF_SE_overall_distinct_10percent_merged.bed -f 0.10 -wao > human_cf_se_state_model_compare.txt
+cat human_cf_se_state_model_compare.txt | awk '{ if ($4==".") print $0;}' | wc -l
+cat human_cf_se_state_model_compare.txt | cut -f 4-6 | sort -k 1,1 -k2,2 | uniq -c | awk '{if ($1>1) print $0;}' | wc -l
+# Less overall (2800 vs 4339) and correlated well with those generated by the 25-state model. Using a requirement for 10% minimum overlap of the 18-state with the 25-state, only returned 20 SE in the 18-state model where there was no or insufficient overlap with an SE from the 25-state model. Some were fragmented, 241 cases where two or more distinct SE in 18-state model are intersecting a larger single distinct SE in the 25-state
+
+# merge and de-duplicate the list of mouse SE
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/mm10/18_state_mouse_ENCODE/intersect_hg19_18_state/mm10_to_hg19_to_mm10
+
+bedtools intersect -a E10.5_cf_rep1_to_hg19_to_mm10.bed -b E10.5_cf_rep2_to_hg19_to_mm10.bed \
+E10.5_cf_rep3_to_hg19_to_mm10.bed \
+E10.5_cf_rep4_to_hg19_to_mm10.bed \
+-wao > E10.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E10.5_cf_rep2_to_hg19_to_mm10.bed -b E10.5_cf_rep3_to_hg19_to_mm10.bed \
+E10.5_cf_rep4_to_hg19_to_mm10.bed \
+E10.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E10.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E10.5_cf_rep3_to_hg19_to_mm10.bed -b E10.5_cf_rep4_to_hg19_to_mm10.bed \
+E10.5_cf_rep1_to_hg19_to_mm10.bed \
+E10.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao >> E10.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E10.5_cf_rep4_to_hg19_to_mm10.bed -b E10.5_cf_rep1_to_hg19_to_mm10.bed \
+E10.5_cf_rep2_to_hg19_to_mm10.bed \
+E10.5_cf_rep3_to_hg19_to_mm10.bed \
+-wao >> E10.5_cf_18-state_intersect_list.txt
+
+
+cat E10.5_cf_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E10.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E10.5_cf_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E10.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E10.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E10.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E10.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E10.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E10.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E10.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E10.5_cf_18_state_SE_0percent_intersect.bed E10.5_cf_18_state_CF_SE_100percent_intersect_list.txt E10.5_cf_18_state_CF_SE_10percent_intersect_list.txt E10.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#3623
+
+bedtools intersect -a E11.5_cf_rep1_to_hg19_to_mm10.bed -b E11.5_cf_rep2_to_hg19_to_mm10.bed \
+E11.5_cf_rep3_to_hg19_to_mm10.bed \
+E11.5_cf_rep4_to_hg19_to_mm10.bed \
+-wao > E11.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E11.5_cf_rep2_to_hg19_to_mm10.bed -b E11.5_cf_rep3_to_hg19_to_mm10.bed \
+E11.5_cf_rep4_to_hg19_to_mm10.bed \
+E11.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E11.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E11.5_cf_rep3_to_hg19_to_mm10.bed -b E11.5_cf_rep4_to_hg19_to_mm10.bed \
+E11.5_cf_rep1_to_hg19_to_mm10.bed \
+E11.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao >> E11.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E11.5_cf_rep4_to_hg19_to_mm10.bed -b E11.5_cf_rep1_to_hg19_to_mm10.bed \
+E11.5_cf_rep2_to_hg19_to_mm10.bed \
+E11.5_cf_rep3_to_hg19_to_mm10.bed \
+-wao >> E11.5_cf_18-state_intersect_list.txt
+
+
+cat E11.5_cf_18-state_intersect_list.txt | awk '{if($10==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E11.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E11.5_cf_18-state_intersect_list.txt | awk '{if($10>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E11.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E11.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E11.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E11.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11<1 && $11>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E11.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E11.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($11<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E11.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E11.5_cf_18_state_SE_0percent_intersect.bed E11.5_cf_18_state_CF_SE_100percent_intersect_list.txt E11.5_cf_18_state_CF_SE_10percent_intersect_list.txt E11.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#2994
+
+bedtools intersect -a E12.5_cf_rep1_to_hg19_to_mm10.bed -b E12.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao > E12.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E12.5_cf_rep2_to_hg19_to_mm10.bed -b E12.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E12.5_cf_18-state_intersect_list.txt
+
+cat E12.5_cf_18-state_intersect_list.txt | awk '{if($9==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E12.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E12.5_cf_18-state_intersect_list.txt | awk '{if($9>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E12.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E12.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E12.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E12.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<1 && $10>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E12.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E12.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E12.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E12.5_cf_18_state_SE_0percent_intersect.bed E12.5_cf_18_state_CF_SE_100percent_intersect_list.txt E12.5_cf_18_state_CF_SE_10percent_intersect_list.txt E12.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+# 1629
+
+bedtools intersect -a E13.5_cf_rep1_to_hg19_to_mm10.bed -b E13.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao > E13.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E13.5_cf_rep2_to_hg19_to_mm10.bed -b E13.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E13.5_cf_18-state_intersect_list.txt
+
+cat E13.5_cf_18-state_intersect_list.txt | awk '{if($9==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E13.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E13.5_cf_18-state_intersect_list.txt | awk '{if($9>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E13.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E13.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E13.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E13.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<1 && $10>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E13.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E13.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E13.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E13.5_cf_18_state_SE_0percent_intersect.bed E13.5_cf_18_state_CF_SE_100percent_intersect_list.txt E13.5_cf_18_state_CF_SE_10percent_intersect_list.txt E13.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#1819
+
+bedtools intersect -a E14.5_cf_rep1_to_hg19_to_mm10.bed -b E14.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao > E14.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E14.5_cf_rep2_to_hg19_to_mm10.bed -b E14.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E14.5_cf_18-state_intersect_list.txt
+
+cat E14.5_cf_18-state_intersect_list.txt | awk '{if($9==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E14.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E14.5_cf_18-state_intersect_list.txt | awk '{if($9>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E14.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E14.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E14.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E14.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<1 && $10>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E14.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E14.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E14.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E14.5_cf_18_state_SE_0percent_intersect.bed E14.5_cf_18_state_CF_SE_100percent_intersect_list.txt E14.5_cf_18_state_CF_SE_10percent_intersect_list.txt E14.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#1619
+
+bedtools intersect -a E15.5_cf_rep1_to_hg19_to_mm10.bed -b E15.5_cf_rep2_to_hg19_to_mm10.bed \
+-wao > E15.5_cf_18-state_intersect_list.txt
+
+bedtools intersect -a E15.5_cf_rep2_to_hg19_to_mm10.bed -b E15.5_cf_rep1_to_hg19_to_mm10.bed \
+-wao >> E15.5_cf_18-state_intersect_list.txt
+
+cat E15.5_cf_18-state_intersect_list.txt | awk '{if($9==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > E15.5_cf_18_state_SE_0percent_intersect.bed
+
+cat E15.5_cf_18-state_intersect_list.txt | awk '{if($9>0) print $0}' | awk '{print $0"\t"$10/($3-$2)}' > E15.5_cf_18_state_CF_SE_intersect_report.txt
+
+cat E15.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > E15.5_cf_18_state_CF_SE_100percent_intersect_list.txt
+
+cat E15.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<1 && $10>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E15.5_cf_18_state_CF_SE_10percent_intersect_list.txt 
+
+cat E15.5_cf_18_state_CF_SE_intersect_report.txt | awk '{if ($10<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > E15.5_cf_18_state_CF_SE_under10percent_intersect_list.txt 
+
+
+cat E15.5_cf_18_state_SE_0percent_intersect.bed E15.5_cf_18_state_CF_SE_100percent_intersect_list.txt E15.5_cf_18_state_CF_SE_10percent_intersect_list.txt E15.5_cf_18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+wc -l E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed
+#1771
+
+bedtools intersect -a E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao  > CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+bedtools intersect -a E15.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed -b E10.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E11.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E12.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E13.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+E14.5_cf_18_state_CF_SE_distinct_list_10percent_cutoff.bed \
+-wao >> CF_18-state_intersect_list_10.txt
+
+cat CF_18-state_intersect_list_10.txt | awk '{if($8==0) print $1,$2,$3}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n - | uniq > 18_state_CF_SE_0percent_intersect.bed
+
+cat CF_18-state_intersect_list_10.txt | awk '{if($8>0) print $0}' | awk '{print $0"\t"$8/($3-$2)}' > 18_state_CF_SE_intersect_report.txt
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9==1) {print $1,$2,$3}}' |tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq > 18_state_CF_SE_100percent_intersect_list.txt
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9<1 && $9>=0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > 18_state_CF_SE_10percent_intersect_list.txt 
+
+cat 18_state_CF_SE_intersect_report.txt | awk '{if ($9<0.1) {print $1,$2,$3}}' | tr ' ' '\t' | sort -k 1,1 -k 2,2n | uniq  > 18_state_CF_SE_under10percent_intersect_list.txt 
+
+cat 18_state_CF_SE_0percent_intersect.bed 18_state_CF_SE_100percent_intersect_list.txt 18_state_CF_SE_10percent_intersect_list.txt 18_state_CF_SE_under10percent_intersect_list.txt | sort -k 1,1 -k 2,2n - | uniq > 18_state_CF_SE_distinct_list_10percent_cutoff.bed 
+
+bedtools merge -i 18_state_CF_SE_distinct_list_10percent_cutoff.bed > mm10_18_state_CF_SE_overall_distinct_10percent_merged.bed
+
+wc -l mm10_18_state_CF_SE_overall_distinct_10percent_merged.bed
+#2239
+
+# lift over the mouse merged and de-duplicated list to hg19, require 25% threshold
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/mm10/18_state_mouse_ENCODE/intersect_hg19_18_state/mm10_to_hg19_to_mm10
+
+module load kent-tools/1.04.00  
+module load libpng/12-1.2.50-10
+liftOver mm10_18_state_CF_SE_overall_distinct_10percent_merged.bed /home/FCAM/awilderman/GENOME/liftOver/mm10ToHg19.over.chain mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed mm10_18_state_CF_SE_overall_distinct_10percent_merged.unMapped -minMatch=0.25
+
+# Find overlap with genes
+
+
+module load libpng/12-1.2.50-10
+module load BEDtools/2.29.0
+
+export HGBED=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+export TSSBED=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/gencode.v25lift37.annotation._2k_TSS_no_GL0_protein_coding_only.bed
+
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $TSSBED -wa -wb > mm10_lifted_tss-encompassing_SE_regions.txt
+
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $TSSBED -wa -c > mm10_lifted_tss-encompassing_SE_regions_counts.txt
+
+# copy to laptop to use RStudio and cut column of ENSGID to use in R
+cat mm10_lifted_tss-encompassing_SE_regions.txt | cut -f 7 > mm10_lifted_tss-encompassing_SE_regions_ENSGID.txt
+
+# Find GO BP and DO terms related to genes that encompass TSSs
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation")
+
+library("clusterProfiler")
+library("DOSE")
+library("GeneStructureTools")
+library("AnnotationDbi")
+library("org.Hs.eg.db")
+
+CF_overlapped_genes <- read.table("mm10_lifted_tss-encompassing_SE_regions_ENSGID.txt", header = FALSE)
+CF_overlapped_genes <- as.data.frame(CF_overlapped_genes)
+CF_overlapped_genes$V2 <- removeVersion(CF_overlapped_genes$V1)
+# Annotate
+CF_overlapped_genes$symbol <- mapIds(org.Hs.eg.db,
+                     keys=CF_overlapped_genes$V2,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+CF_overlapped_genes$entrez <- mapIds(org.Hs.eg.db,
+                     keys=CF_overlapped_genes$V2,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+                    
+ego <- enrichGO(gene         = CF_overlapped_genes$V2,
+                OrgDb         = org.Hs.eg.db,
+                keyType       = 'ENSEMBL',
+                ont           = "BP",
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.05,
+                qvalueCutoff  = 0.05)
+
+# provide a background list
+
+BG <- read.table("Figure1-superenhancers_human/protein_coding_only_analysis/protein_coding_only_with_non-condensed_CF_SE_list/gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed", header = FALSE)
+BG <- as.data.frame(BG)
+BG$V7 <- removeVersion(BG$V4)
+BG$symbol <- mapIds(org.Hs.eg.db,
+                     keys=BG$V7,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+BG$entrez <- mapIds(org.Hs.eg.db,
+                     keys=BG$V7,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+
+
+
+x <- enrichDGN(gene          = CF_overlapped_genes$entrez,
+              pvalueCutoff  = 0.1,
+              pAdjustMethod = "BH",
+              universe      = BG$entrez,
+              minGSSize     = 5,
+              maxGSSize     = 500,
+              qvalueCutoff  = 0.1,
+              readable      = FALSE)
+head(x)
+
+
+
+write.table(ego, file = "mm10_lifted_overlapped_TSS_cf_GO_BP_sig.txt")
+write.table(x, file = "mm10_lifted_overlapped_TSS_DO_enrich.txt")
+
+#term    FDR    enrichment    count
+
+library(ggplot2)
+
+cf <- read.table("mm10_lifted_overlapped_TSS_cf_GO_BP_sig.txt", header=TRUE)
+cf$neglog10 <- -log10(cf$p.adjust)
+cf$obs <- as.numeric(cf$GeneRatio)
+cf$expect <- as.numeric(cf$BgRatio)
+cf$enrichment <- cf$obs/cf$expect
+cf$Description <- reorder(cf$Description, cf$neglog10)
+
+# There were a lot of significant terms, cut down to those with neglog10 value >8
+cf8 <- cf[ which(cf$neglog10>8),]
+
+ggplot(cf8, aes(x=Description, y=neglog10)) +
+  geom_point(aes (color=enrichment, size=Count)) +   # Draw points
+  scale_color_gradient(low="purple", high="red") +
+  geom_segment(aes(x=Description, 
+                   xend=Description, 
+                   y=min(neglog10), 
+                   yend=max(neglog10)), 
+               linetype="dashed", 
+               size=0.1) +   # Draw dashed lines
+  labs(title="Biological Process GO Terms Enriched", 
+       subtitle="human genes overlapped by lifted superenhancers from mouse embryonic craniofacial tissue") +  
+  coord_flip()
+
+
+
+all <- read.table("mm10_lifted_overlapped_TSS_DO_enrich.txt", header=TRUE)
+all$neglog10 <- -log10(all$p.adjust)
+all$obs <- as.numeric(all$GeneRatio)
+all$expect <- as.numeric(all$BgRatio)
+all$enrichment <- all$obs/all$expect
+all$Description <- reorder(all$Description, all$neglog10)
+top <- subset(all, enrichment > 10) 
+
+ggplot(all, aes(x=Description, y=neglog10)) +
+  geom_point(aes (color=enrichment, size=Count)) +   # Draw points
+  scale_color_gradient(low="purple", high="red") +
+  geom_segment(aes(x=Description, 
+                   xend=Description, 
+                   y=min(neglog10), 
+                   yend=max(neglog10)), 
+               linetype="dashed", 
+               size=0.1) +   # Draw dashed lines
+  labs(title="Disease Ontology Terms Enriched", 
+       subtitle="human genes overlapped by lifted superenhancers from mouse embryonic craniofacial tissue") +  
+  coord_flip()
+write.table(top, file = "Top_with_enrich_10_or_more_All_CF_SE_all_overlapped_genes_GO_BP_enrich.txt")
+# Trim to non-redundant terms and enriched with count of >20 genes
+
+
+# as for non-encompassing loci:
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/mm10/18_state_mouse_ENCODE/intersect_hg19_18_state/mm10_to_hg19_to_mm10
+cat mm10_lifted_tss-encompassing_SE_regions_counts.txt | awk '{ if($4==0) print $0;}' | cut -f 1-3 > mm10_lifted_to_hg19_non-encompassing_list.bed
+# 701 loci
+
+# Put this into GREAT using whole genome as background, find 2 nearest genes and include curated regulatory regions.
+# Most found were within +/- 50 to 500 kb of TSS, as previously identified, share similar craniofacial and developmental GO and Phenotype terms as the human 25-state SE. 
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/mm10/18_state_mouse_ENCODE/intersect_hg19_18_state/mm10_to_hg19_to_mm10
+export HUMANDIR=/home/FCAM/awilderman/ANALYSIS/ROSE/hg19/18_state/hg19_CF_SE_to_mm10/hg19_CF_SE_to_mm10_to_hg19
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $HUMANDIR/18_state_CF_SE_overall_distinct_10percent_merged.bed -f 0.50 -wao > mm10_lifted_50perc_intersect_with_human_se.txt
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $HUMANDIR/18_state_CF_SE_overall_distinct_10percent_merged.bed -f 0.40 -wao > mm10_lifted_40perc_intersect_with_human_se.txt
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $HUMANDIR/18_state_CF_SE_overall_distinct_10percent_merged.bed -f 0.30 -wao > mm10_lifted_30perc_intersect_with_human_se.txt
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $HUMANDIR/18_state_CF_SE_overall_distinct_10percent_merged.bed -f 0.20 -wao > mm10_lifted_20perc_intersect_with_human_se.txt
+bedtools intersect -a mm10_18_state_CF_SE_overall_distinct_10percent_merged_lift_to_hg19.bed -b $HUMANDIR/18_state_CF_SE_overall_distinct_10percent_merged.bed -f 0.10 -wao > mm10_lifted_10perc_intersect_with_human_se.txt
+
+cat mm10_lifted_50perc_intersect_with_human_se.txt | awk '{ if ($5>-1) print $0;'} | wc -l
+# 659
+cat mm10_lifted_40perc_intersect_with_human_se.txt | awk '{ if ($5>-1) print $0;'} | wc -l
+# 819
+cat mm10_lifted_30perc_intersect_with_human_se.txt | awk '{ if ($5>-1) print $0;'} | wc -l
+# 1055
+cat mm10_lifted_20perc_intersect_with_human_se.txt | awk '{ if ($5>-1) print $0;'} | wc -l
+# 1329
+cat mm10_lifted_10perc_intersect_with_human_se.txt | awk '{ if ($5>-1) print $0;'} | wc -l
+# 1653
