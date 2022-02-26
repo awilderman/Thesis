@@ -1,0 +1,400 @@
+## mm10 superenhancer liftover curve plotting
+## Use after running Liftover_curve.slurm
+
+srun -N 1 -p general --qos general -n 1 --mem=1G --pty bash
+module load R/3.4.1
+xvfb-run R
+setwd("/home/FCAM/awilderman/ANALYSIS/ROSE/hg19_mm10_compare/liftover_stringency")
+
+opar <- par()
+#----
+# Superenhancer lifted segments
+#####
+
+#Create Table
+Dataset = as.data.frame(read.table("stage_reps_liftover_curve.txt", header = TRUE,sep="\t"))
+setwd("~/ANALYSIS")
+
+
+library(ggplot2)
+
+png(filename = "Superenhancer_liftover_line_plot.png", width = 1000, height = 1000, units = "px")
+par(bg="white", mar = c(6,13,5,2))
+
+# Default line plot is fine- default colors match violin plots
+ggplot(Dataset, aes(x=minMatch, y=Percentage, group=Stage, color=Day)) + 
+  geom_line((aes(color=Day))) +
+  geom_point(aes(shape=Stage), size=3)+
+  scale_shape_manual(values=c(0,2,4,5,0,2,4,5,0,2,0,2,0,2,0,2)) +
+  theme(text=element_text(size=10, family="sans"))
+#print(p)
+
+dev.off()
+par(opar)
+
+#######
+# After liftover and map-back (true reciprocals) of samples, not yet separated by state
+# Pearson of 18-state mouse v human states
+
+## 1 ## separate mouse CF E11.5 rep1 (after reciprocal process) which was lifted over to hg19 by state
+srun -N 1 -p general --qos general -n 1 --mem=1G --pty bash
+
+cd /home/FCAM/awilderman/ANALYSIS/Mouse_18_state_Liftover/All_Tissues
+sed -i 's|ZNF/Rpts|ZNF_Rpts|g' embryonic_11.5_day_craniofacial_rep1_18state.reciprocal_to_hg19.bed
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do 
+	echo "cat embryonic_11.5_day_craniofacial_rep1_18state.reciprocal_to_hg19.bed | grep "$state" | awk '{print \$1\"\t\"\$2\"\t\"\$3\"\t\""$state"\"_\"\$10}' > E11.5_rep1_separated_by_State/embryonic_11.5_day_craniofacial_rep1_18state_"$state >> separate_embryonic_11.5_day_craniofacial_rep1_by_state.sh
+done
+
+chmod +x *.sh
+./separate_embryonic_11.5_day_craniofacial_rep1_by_state.sh
+
+## 3 ## separate CS13-12383 (after reciprocal process) by state
+
+cd /home/FCAM/awilderman/ANALYSIS/Human_18_state_liftover/Craniofacial
+sed -i 's|ZNF/Rpts|ZNF_Rpts|g' CS13-12383_18state.hg19_to_mm10_to_hg19.bed
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do
+	echo "cat CS13-12383_18state.hg19_to_mm10_to_hg19.bed | grep "$state" | awk '{print \$1\"\t\"\$2\"\t\"\$3\"\t\""$state"\"_\"\$1\"_\"\$2\"_\"\$3}' > CS13-12383_separated_by_State/CS13-12383_18state_"$state >> separate_CS13-12383_18state_by_state.sh
+done 
+
+chmod +x *.sh
+./separate_CS13-12383_18state_by_state.sh
+
+## 4 ## intersect lifted segments with CS13-12383 separate states, require 50% overlap 
+cd /home/FCAM/awilderman/ANALYSIS/Human_18_state_liftover/Craniofacial/CS13-12383_separated_by_State/compare_to_mouse_E11.5_lifted_to_hg19
+module load BEDtools/2.29.0
+module load libpng/12-1.2.50-10
+
+export MOUSEDIR=/home/FCAM/awilderman/ANALYSIS/Mouse_18_state_Liftover/All_Tissues/E11.5_rep1_separated_by_State
+export HUMDIR=/home/FCAM/awilderman/ANALYSIS/Human_18_state_liftover/Craniofacial/CS13-12383_separated_by_State
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do
+	bedtools intersect -a $HUMDIR/CS13-12383_18state_$state -b  \
+	$HUMDIR/CS13-12383_18state_1_TssA \
+	$HUMDIR/CS13-12383_18state_2_TssFlnk \
+	$HUMDIR/CS13-12383_18state_3_TssFlnkU \
+	$HUMDIR/CS13-12383_18state_4_TssFlnkD \
+	$HUMDIR/CS13-12383_18state_5_Tx \
+	$HUMDIR/CS13-12383_18state_6_TxWk \
+	$HUMDIR/CS13-12383_18state_7_EnhG1 \
+	$HUMDIR/CS13-12383_18state_8_EnhG2 \
+	$HUMDIR/CS13-12383_18state_9_EnhA1 \
+	$HUMDIR/CS13-12383_18state_10_EnhA2 \
+	$HUMDIR/CS13-12383_18state_11_EnhWk \
+	$HUMDIR/CS13-12383_18state_12_ZNF_Rpts \
+	$HUMDIR/CS13-12383_18state_13_Het \
+	$HUMDIR/CS13-12383_18state_14_TssBiv \
+	$HUMDIR/CS13-12383_18state_15_EnhBiv \
+	$HUMDIR/CS13-12383_18state_16_ReprPC \
+	$HUMDIR/CS13-12383_18state_17_ReprPCWk \
+	$HUMDIR/CS13-12383_18state_18_Quies \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_1_TssA \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_2_TssFlnk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_3_TssFlnkU \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_4_TssFlnkD \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_5_Tx \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_6_TxWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_7_EnhG1 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_8_EnhG2 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_9_EnhA1 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_11_EnhWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_12_ZNF_Rpts \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_13_Het \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_14_TssBiv \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_15_EnhBiv \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_16_ReprPC \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_17_ReprPCWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_18_Quies \
+	-wa -wb -filenames -r -f 0.5 -sortout > CS13-12383_18state_$state.intersect_with_E11.5_for_pearson.bed
+done
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do	
+	bedtools intersect -a $MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_$state -b  \
+	$HUMDIR/CS13-12383_18state_1_TssA \
+	$HUMDIR/CS13-12383_18state_2_TssFlnk \
+	$HUMDIR/CS13-12383_18state_3_TssFlnkU \
+	$HUMDIR/CS13-12383_18state_4_TssFlnkD \
+	$HUMDIR/CS13-12383_18state_5_Tx \
+	$HUMDIR/CS13-12383_18state_6_TxWk \
+	$HUMDIR/CS13-12383_18state_7_EnhG1 \
+	$HUMDIR/CS13-12383_18state_8_EnhG2 \
+	$HUMDIR/CS13-12383_18state_9_EnhA1 \
+	$HUMDIR/CS13-12383_18state_10_EnhA2 \
+	$HUMDIR/CS13-12383_18state_11_EnhWk \
+	$HUMDIR/CS13-12383_18state_12_ZNF_Rpts \
+	$HUMDIR/CS13-12383_18state_13_Het \
+	$HUMDIR/CS13-12383_18state_14_TssBiv \
+	$HUMDIR/CS13-12383_18state_15_EnhBiv \
+	$HUMDIR/CS13-12383_18state_16_ReprPC \
+	$HUMDIR/CS13-12383_18state_17_ReprPCWk \
+	$HUMDIR/CS13-12383_18state_18_Quies \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_1_TssA \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_2_TssFlnk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_3_TssFlnkU \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_4_TssFlnkD \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_5_Tx \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_6_TxWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_7_EnhG1 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_8_EnhG2 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_9_EnhA1 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2 \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_11_EnhWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_12_ZNF_Rpts \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_13_Het \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_14_TssBiv \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_15_EnhBiv \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_16_ReprPC \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_17_ReprPCWk \
+	$MOUSEDIR/embryonic_11.5_day_craniofacial_rep1_18state_18_Quies \
+	-wa -wb -filenames -r -f 0.5 -sortout > embryonic_11.5_day_craniofacial_rep1_18state_$state.intersect_with_CS13_for_pearson.bed
+done
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do
+	wc -l $HUMDIR/CS13-12383_18state_$state >> hg19_states.stats
+	#echo $state >> state_list.txt
+done
+
+for state in 1_TssA 2_TssFlnk 3_TssFlnkU 4_TssFlnkD 5_Tx 6_TxWk 7_EnhG1 8_EnhG2 9_EnhA1 10_EnhA2 11_EnhWk 12_ZNF_Rpts 13_Het 14_TssBiv 15_EnhBiv 16_ReprPC 17_ReprPCWk 18_Quies;
+do
+	echo "cat state_list.txt | awk '{print \"cat CS13-12383_18state_"$state".intersect_with_E11.5_for_pearson.bed | grep CS13-12383_18state_\"\$1\" | wc -l > CS13-12383_18state_"$state"_intersect_with_CS13-12383_18state_\"\$1\".stats\"}'" >> make_get_intersect_stats_pt1.sh
+	echo "cat state_list.txt | awk '{print \"cat CS13-12383_18state_"$state".intersect_with_E11.5_for_pearson.bed | grep embryonic_11.5_day_craniofacial_rep1_18state_\"\$1\" | wc -l > CS13-12383_18state_"$state"_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_\"\$1\".stats\"}'" >> make_get_intersect_stats_pt1.sh
+	echo "cat state_list.txt | awk '{print \"cat embryonic_11.5_day_craniofacial_rep1_18state_"$state".intersect_with_CS13_for_pearson.bed | grep CS13-12383_18state_\"\$1\" | wc -l > embryonic_11.5_day_craniofacial_rep1_18state_"$state"_intersect_with_CS13-12383_18state_\"\$1\".stats\"}'" >> make_get_intersect_stats_pt1.sh
+	echo "cat state_list.txt | awk '{print \"cat embryonic_11.5_day_craniofacial_rep1_18state_"$state".intersect_with_CS13_for_pearson.bed | grep embryonic_11.5_day_craniofacial_rep1_18state_\"\$1\" | wc -l > embryonic_11.5_day_craniofacial_rep1_18state_"$state"_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_\"\$1\".stats\"}'" >> make_get_intersect_stats_pt1.sh
+done
+
+
+chmod +x *.sh
+./make_get_intersect_stats_pt1.sh > make_get_intersect_stats_pt2.sh
+chmod +x *.sh 
+./make_get_intersect_stats_pt2.sh
+
+## 5 ## Format for R
+
+nano compare_to.txt
+
+H_1_TssA
+H_2_TssFlnk
+H_3_TssFlnkU
+H_4_TssFlnkD
+H_5_Tx
+H_6_TxWk
+H_7_EnhG1
+H_8_EnhG2
+H_9_EnhA1
+H_10_EnhA2
+H_11_EnhWk
+H_12_ZNFRpts
+H_13_Het
+H_14_TssBiv
+H_15_EnhBiv
+H_16_ReprPC
+H_17_ReprPCWk
+H_18_Quies
+M_1_TssA
+M_2_TssFlnk
+M_3_TssFlnkU
+M_4_TssFlnkD
+M_5_Tx
+M_6_TxWk
+M_7_EnhG1
+M_8_EnhG2
+M_9_EnhA1
+M_10_EnhA2
+M_11_EnhWk
+M_12_ZNFRpts
+M_13_Het
+M_14_TssBiv
+M_15_EnhBiv
+M_16_ReprPC
+M_17_ReprPCWk
+M_18_Quies
+
+## print out the intersections from CS13 state comparisons
+
+echo "more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_1_TssA.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_2_TssFlnk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_3_TssFlnkU.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_4_TssFlnkD.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_5_Tx.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_6_TxWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_7_EnhG1.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_8_EnhG2.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_9_EnhA1.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_10_EnhA2.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_11_EnhWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_12_ZNF_Rpts.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_13_Het.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_14_TssBiv.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_15_EnhBiv.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_16_ReprPC.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_17_ReprPCWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_CS13-12383_18state_18_Quies.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_1_TssA.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_2_TssFlnk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_3_TssFlnkU.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_4_TssFlnkD.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_5_Tx.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_6_TxWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_7_EnhG1.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_8_EnhG2.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_9_EnhA1.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_11_EnhWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_12_ZNF_Rpts.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_13_Het.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_14_TssBiv.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_15_EnhBiv.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_16_ReprPC.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_17_ReprPCWk.stats
+more CS13-12383_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_18_Quies.stats" > CS13-12383_18state_10_EnhA2_intersects.sh
+
+sed 's/10_EnhA2_intersect/11_EnhWk_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_11_EnhWk_intersects.sh
+sed 's/10_EnhA2_intersect/12_ZNF_Rpts_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_12_ZNF_Rpts_intersects.sh
+sed 's/10_EnhA2_intersect/13_Het_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_13_Het_intersects.sh
+sed 's/10_EnhA2_intersect/14_TssBiv_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_14_TssBiv_intersects.sh
+sed 's/10_EnhA2_intersect/15_EnhBiv_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_15_EnhBiv_intersects.sh
+sed 's/10_EnhA2_intersect/16_ReprPC_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_16_ReprPC_intersects.sh
+sed 's/10_EnhA2_intersect/17_ReprPCWk_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_17_ReprPCWk_intersects.sh
+sed 's/10_EnhA2_intersect/18_Quies_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_18_Quies_intersects.sh
+sed 's/10_EnhA2_intersect/1_TssA_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_1_TssA_intersects.sh
+sed 's/10_EnhA2_intersect/2_TssFlnk_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_2_TssFlnk_intersects.sh
+sed 's/10_EnhA2_intersect/3_TssFlnkU_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_3_TssFlnkU_intersects.sh
+sed 's/10_EnhA2_intersect/4_TssFlnkD_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_4_TssFlnkD_intersects.sh
+sed 's/10_EnhA2_intersect/5_Tx_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_5_Tx_intersects.sh
+sed 's/10_EnhA2_intersect/6_TxWk_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_6_TxWk_intersects.sh
+sed 's/10_EnhA2_intersect/7_EnhG1_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_7_EnhG1_intersects.sh
+sed 's/10_EnhA2_intersect/8_EnhG2_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_8_EnhG2_intersects.sh
+sed 's/10_EnhA2_intersect/9_EnhA1_intersect/g' < CS13-12383_18state_10_EnhA2_intersects.sh > CS13-12383_18state_9_EnhA1_intersects.sh
+
+chmod +x *.sh
+./CS13-12383_18state_10_EnhA2_intersects.sh > CS13-10.txt
+./CS13-12383_18state_11_EnhWk_intersects.sh > CS13-11.txt
+./CS13-12383_18state_12_ZNF_Rpts_intersects.sh > CS13-12.txt
+./CS13-12383_18state_13_Het_intersects.sh > CS13-13.txt
+./CS13-12383_18state_14_TssBiv_intersects.sh > CS13-14.txt
+./CS13-12383_18state_15_EnhBiv_intersects.sh > CS13-15.txt
+./CS13-12383_18state_16_ReprPC_intersects.sh > CS13-16.txt
+./CS13-12383_18state_17_ReprPCWk_intersects.sh > CS13-17.txt
+./CS13-12383_18state_18_Quies_intersects.sh > CS13-18.txt
+./CS13-12383_18state_1_TssA_intersects.sh > CS13-1.txt
+./CS13-12383_18state_2_TssFlnk_intersects.sh > CS13-2.txt
+./CS13-12383_18state_3_TssFlnkU_intersects.sh > CS13-3.txt
+./CS13-12383_18state_4_TssFlnkD_intersects.sh > CS13-4.txt
+./CS13-12383_18state_5_Tx_intersects.sh > CS13-5.txt
+./CS13-12383_18state_6_TxWk_intersects.sh > CS13-6.txt
+./CS13-12383_18state_7_EnhG1_intersects.sh > CS13-7.txt
+./CS13-12383_18state_8_EnhG2_intersects.sh > CS13-8.txt
+./CS13-12383_18state_9_EnhA1_intersects.sh > CS13-9.txt
+paste compare_to.txt CS13-1.txt CS13-2.txt CS13-3.txt CS13-4.txt CS13-5.txt CS13-6.txt CS13-7.txt CS13-8.txt CS13-9.txt CS13-10.txt CS13-11.txt CS13-12.txt CS13-13.txt CS13-14.txt CS13-15.txt CS13-16.txt CS13-17.txt CS13-18.txt > H_intersects_for_pearson_counts_require_50pct_olap.txt
+
+# Paste this into Excel
+## print out the intersections from E11.5 comparisons
+
+echo "more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_1_TssA.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_2_TssFlnk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_3_TssFlnkU.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_4_TssFlnkD.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_5_Tx.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_6_TxWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_7_EnhG1.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_8_EnhG2.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_9_EnhA1.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_10_EnhA2.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_11_EnhWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_12_ZNF_Rpts.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_13_Het.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_14_TssBiv.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_15_EnhBiv.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_16_ReprPC.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_17_ReprPCWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_CS13-12383_18state_18_Quies.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_1_TssA.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_2_TssFlnk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_3_TssFlnkU.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_4_TssFlnkD.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_5_Tx.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_6_TxWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_7_EnhG1.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_8_EnhG2.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_9_EnhA1.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_11_EnhWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_12_ZNF_Rpts.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_13_Het.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_14_TssBiv.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_15_EnhBiv.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_16_ReprPC.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_17_ReprPCWk.stats
+more embryonic_11.5_day_craniofacial_rep1_18state_10_EnhA2_intersect_with_embryonic_11.5_day_craniofacial_rep1_18state_18_Quies.stats" > embryonic_11.5_18state_10_EnhA2_intersects.sh
+
+sed 's/10_EnhA2_intersect/11_EnhWk_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_11_EnhWk_intersects.sh
+sed 's/10_EnhA2_intersect/12_ZNF_Rpts_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_12_ZNF_Rpts_intersects.sh
+sed 's/10_EnhA2_intersect/13_Het_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_13_Het_intersects.sh
+sed 's/10_EnhA2_intersect/14_TssBiv_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_14_TssBiv_intersects.sh
+sed 's/10_EnhA2_intersect/15_EnhBiv_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_15_EnhBiv_intersects.sh
+sed 's/10_EnhA2_intersect/16_ReprPC_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_16_ReprPC_intersects.sh
+sed 's/10_EnhA2_intersect/17_ReprPCWk_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_17_ReprPCWk_intersects.sh
+sed 's/10_EnhA2_intersect/18_Quies_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_18_Quies_intersects.sh
+sed 's/10_EnhA2_intersect/1_TssA_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_1_TssA_intersects.sh
+sed 's/10_EnhA2_intersect/2_TssFlnk_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_2_TssFlnk_intersects.sh
+sed 's/10_EnhA2_intersect/3_TssFlnkU_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_3_TssFlnkU_intersects.sh
+sed 's/10_EnhA2_intersect/4_TssFlnkD_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_4_TssFlnkD_intersects.sh
+sed 's/10_EnhA2_intersect/5_Tx_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_5_Tx_intersects.sh
+sed 's/10_EnhA2_intersect/6_TxWk_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_6_TxWk_intersects.sh
+sed 's/10_EnhA2_intersect/7_EnhG1_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_7_EnhG1_intersects.sh
+sed 's/10_EnhA2_intersect/8_EnhG2_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_8_EnhG2_intersects.sh
+sed 's/10_EnhA2_intersect/9_EnhA1_intersect/g' < embryonic_11.5_18state_10_EnhA2_intersects.sh > embryonic_11.5_18state_9_EnhA1_intersects.sh
+
+chmod +x *.sh
+./embryonic_11.5_18state_10_EnhA2_intersects.sh > E11.5-10.txt
+./embryonic_11.5_18state_11_EnhWk_intersects.sh > E11.5-11.txt
+./embryonic_11.5_18state_12_ZNF_Rpts_intersects.sh > E11.5-12.txt
+./embryonic_11.5_18state_13_Het_intersects.sh > E11.5-13.txt
+./embryonic_11.5_18state_14_TssBiv_intersects.sh > E11.5-14.txt
+./embryonic_11.5_18state_15_EnhBiv_intersects.sh > E11.5-15.txt
+./embryonic_11.5_18state_16_ReprPC_intersects.sh > E11.5-16.txt
+./embryonic_11.5_18state_17_ReprPCWk_intersects.sh > E11.5-17.txt
+./embryonic_11.5_18state_18_Quies_intersects.sh > E11.5-18.txt
+./embryonic_11.5_18state_1_TssA_intersects.sh > E11.5-1.txt
+./embryonic_11.5_18state_2_TssFlnk_intersects.sh > E11.5-2.txt
+./embryonic_11.5_18state_3_TssFlnkU_intersects.sh > E11.5-3.txt
+./embryonic_11.5_18state_4_TssFlnkD_intersects.sh > E11.5-4.txt
+./embryonic_11.5_18state_5_Tx_intersects.sh > E11.5-5.txt
+./embryonic_11.5_18state_6_TxWk_intersects.sh > E11.5-6.txt
+./embryonic_11.5_18state_7_EnhG1_intersects.sh > E11.5-7.txt
+./embryonic_11.5_18state_8_EnhG2_intersects.sh > E11.5-8.txt
+./embryonic_11.5_18state_9_EnhA1_intersects.sh > E11.5-9.txt
+paste E11.5-1.txt E11.5-2.txt E11.5-3.txt E11.5-4.txt E11.5-5.txt E11.5-6.txt E11.5-7.txt E11.5-8.txt E11.5-9.txt E11.5-10.txt E11.5-11.txt E11.5-12.txt E11.5-13.txt E11.5-14.txt E11.5-15.txt E11.5-16.txt E11.5-17.txt E11.5-18.txt > M_intersects_for_pearson_counts_require_50pct_olap.txt
+
+# Paste this next to the CS13 results in Excel
+# Use excel to turn counts to percent (add header "Compare_to H_states_1...18 M_states_1...18)
+# Create a file of percent intersect for R (do not multiply by 100)
+# save as CS13_E11_5_compare_for_intervene_pearson.txt
+
+
+## 6 ## Run R script in RStudio, export PDFs using cairo
+
+if (suppressMessages(!require("corrplot"))) suppressMessages(install.packages("corrplot", repos="http://cran.us.r-project.org"))
+library("corrplot")
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Thesis/3-Chapter\ 2\ Superenhancer\ characterization\ and\ identification\ of\ HOXA\ GCR/Raw\ data\ or\ close\ to\ it")
+intersection_matrix <- as.matrix(read.table("CS13_E11_5_compare_for_intervene_pearson.txt", header = TRUE, row.name = "percent_compare_to"))
+
+intersection_matrix <- cor(intersection_matrix, method="pearson")
+corrplot(intersection_matrix, method ="pie", title="Pairwise intersection-pearson correlation(Fraction of overlap)", tl.col="black", tl.cex=0.8, is.corr = TRUE, diag=FALSE, addrect
+=1, mar=c(0,0,2,1), rect.col = "black")
+#dev.off()
+
+# Show percent in common by treating like a non-correlation
+correlation_matrix <- cor(intersection_matrix, method="pearson")
+corrplot(intersection_matrix, method ="pie", title="Pairwise intersection-pearson correlation(Fraction of overlap)", tl.col="black", tl.cex=0.8, is.corr = FALSE, diag=FALSE, addrect
+=1, mar=c(0,0,2,1), rect.col = "black")
+#dev.off()
+
