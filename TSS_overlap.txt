@@ -1,0 +1,440 @@
+# Count the number of genes each superenhancer overlaps across individual CF and heart samples and dbSUPER samples in directory
+
+# Revised to include only Level 1 and level 2 annotations for KNOWN, not psuedogene _protein-coding_ genes
+
+
+
+awk '{if($0~"level (1|2);"){print $0}}' /home/FCAM/jcotney/GENOME/hg19/annotation/gencode.v25lift37.annotation.gtf > gencode.v25lift37.level1-2_only_annotation.gtf
+
+cat gencode.v25lift37.level1-2_only_annotation.gtf | grep -v pseudogene | grep "KNOWN" | grep "protein_coding" > gencode.v25lift37.level1-2_KNOWN_not_psuedogene_protein_coding_only_annotation.gtf
+
+awk '{print $10}' gencode.v25lift37.level1-2_KNOWN_not_psuedogene_protein_coding_only_annotation.gtf | sed 's/"//g' | sed 's/;//g' | sort - | uniq > gencode.v25lift37.level1-2_ENSGID_list.txt
+
+cat gencode.v25lift37.level1-2_ENSGID_list.txt | awk '{print "grep \""$1"\" gencode.v25lift37.annotation.noGL0.bed >> gencode.v25lift37.annotation.noGL0_lv_1_2_only.bed"}' > find_level1_level2.sh
+
+sort -k 1,1 -k 2,2n gencode.v25lift37.annotation.noGL0_lv_1_2_only.bed >  gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+
+
+mkdir /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis
+
+
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export EMMADIR=/home/FCAM/ewentworth/cotney/rawdata/chromatinsegmentations/superenhancers/human
+
+export HGBED=../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+
+
+bedtools intersect -a $EMMADIR/CS13-12383_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c > gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS13-12690_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS13-12829_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS13-12830_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS13-12877_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS14-12408_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS14-12709_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS14-12913_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS15-13000_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS15-13019_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS15-13128_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS17-12191_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS17-12331_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS17-12341_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS17-12611_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CS20-12104_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/F2-N2108_CF_SuperEnhancers.bed -b $HGBED -wb | cut -f 4,8 | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12383_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS13_12383_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12690_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS13_12690_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12408_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS14_12408_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/14135_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS14_14135_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12997_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS16_12997_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/14315_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS16_14315_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12291_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS17_12291_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12331_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS17_12331_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12059_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS18_12059_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12456_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS18_12456_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/11914_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS19_11914_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12135_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS19_12135_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12448_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS20_12448_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12451_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS20_12451_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/11849_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS21_11849_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12093_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS21_12093_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12058_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS23_12058_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/12151_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CS23_12151_heart_"$4"\t"$8}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/AdiposeNuclei_SuperEnhancers.bed -b $HGBED -wb | awk '{print "AdiposeNuclei_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c  >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/AdiposeTissue_SuperEnhancers.bed -b $HGBED -wb | awk '{print "AdiposeTissue_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/AdrenalGland_SuperEnhancers.bed -b $HGBED -wb | awk '{print "AdrenalGland_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Aorta_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Aorta_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Astrocytes_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Astrocytes_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Bladder_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Bladder_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainAngularGyrus_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainAngularGyrus_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainAnteriorCaudate_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainAnteriorCaudate_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainCingulateGyrus_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainCingulateGyrus_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainHippocampusMiddle150_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainHippocampusMiddle150_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainHippocampusMiddle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainHippocampusMiddle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainInferiorTemporalLobe_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainInferiorTemporalLobe_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/BrainMidFrontalLobe_SuperEnhancers.bed -b $HGBED -wb | awk '{print "BrainMidFrontalLobe_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD14_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD14_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD19Primary_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD19Primary_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD20_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD20_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD34adult_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD34adult_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD34fetal_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD34fetal_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD34PrimaryRO01480_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD34PrimaryRO01480_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD34PrimaryRO01536_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD34PrimaryRO01536_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD34PrimaryRO01549_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD34PrimaryRO01549_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD3_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD3_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4MemoryPrimary7pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4MemoryPrimary7pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4MemoryPrimary8pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4MemoryPrimary8pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4NaivePrimary7pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4NaivePrimary7pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4NaivePrimary8pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4NaivePrimary8pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4pCD225intCD127pTmem_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4pCD225intCD127pTmem_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4pCD25-CD45RApNaive_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4pCD25-CD45RApNaive_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4pCD25-CD45ROpMemory_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4pCD25-CD45ROpMemory_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4pCD25-Il17-PMAstimTh_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4pCD25-Il17-PMAstimTh_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD4pCD25-Il17pPMAstimTh17_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD4pCD25-Il17pPMAstimTh17_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD56_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD56_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD8Memory7pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD8Memory7pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD8Naive7pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD8Naive7pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD8Naive8pool_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD8Naive8pool_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/CD8primiary_SuperEnhancers.bed -b $HGBED -wb | awk '{print "CD8primiary_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/ColonCrypt1_SuperEnhancers.bed -b $HGBED -wb | awk '{print "ColonCrypt1_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/ColonCrypt2_SuperEnhancers.bed -b $HGBED -wb | awk '{print "ColonCrypt2_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/ColonCrypt3_SuperEnhancers.bed -b $HGBED -wb | awk '{print "ColonCrypt3_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/DHL6_SuperEnhancers.bed -b $HGBED -wb | awk '{print "DHL6_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/DND41_SuperEnhancers.bed -b $HGBED -wb | awk '{print "DND41_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/DuodenumSmoothMuscle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "DuodenumSmoothMuscle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Esophagus_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Esophagus_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/FetalIntestineLarge_SuperEnhancers.bed -b $HGBED -wb | awk '{print "FetalIntestineLarge_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/FetalIntestine_SuperEnhancers.bed -b $HGBED -wb | awk '{print "FetalIntestine_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/FetalMuscle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "FetalMuscle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/FetalThymus_SuperEnhancers.bed -b $HGBED -wb | awk '{print "FetalThymus_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Gastric_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Gastric_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/H1_SuperEnhancers.bed -b $HGBED -wb | awk '{print "H1_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/H2171_SuperEnhancers.bed -b $HGBED -wb | awk '{print "H2171_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HBL1_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HBL1_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HCC1954_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HCC1954_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HCT-116_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HCT-116_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HeLa_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HeLa_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HepG2_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HepG2_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HMEC_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HMEC_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/HSMM_SuperEnhancers.bed -b $HGBED -wb | awk '{print "HSMM_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/LeftVentricle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "LeftVentricle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/LNCaP_SuperEnhancers.bed -b $HGBED -wb | awk '{print "LNCaP_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Lung_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Lung_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Ly1_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Ly1_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Ly3_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Ly3_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Ly4_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Ly4_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/MCF-7_SuperEnhancers.bed -b $HGBED -wb | awk '{print "MCF-7_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/NHEK_SuperEnhancers.bed -b $HGBED -wb | awk '{print "NHEK_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/NHLF_SuperEnhancers.bed -b $HGBED -wb | awk '{print "NHLF_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Osteoblasts_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Osteoblasts_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Ovary_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Ovary_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Panc1_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Panc1_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Pancreas_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Pancreas_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/PancreaticIslets_SuperEnhancers.bed -b $HGBED -wb | awk '{print "PancreaticIslets_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/PsoasMuscle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "PsoasMuscle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/RightAtrium_SuperEnhancers.bed -b $HGBED -wb | awk '{print "RightAtrium_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/RightVentricle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "RightVentricle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/SigmoidColon_SuperEnhancers.bed -b $HGBED -wb | awk '{print "SigmoidColon_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/SkeletalMuscleMyoblast_SuperEnhancers.bed -b $HGBED -wb | awk '{print "SkeletalMuscleMyoblast_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/SkeletalMuscle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "SkeletalMuscle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/SmallIntestine_SuperEnhancers.bed -b $HGBED -wb | awk '{print "SmallIntestine_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Spleen_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Spleen_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/StomachSmoothMuscle_SuperEnhancers.bed -b $HGBED -wb | awk '{print "StomachSmoothMuscle_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Thymus_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Thymus_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Toledo_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Toledo_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+bedtools intersect -a $EMMADIR/Tonsil_SuperEnhancers.bed -b $HGBED -wb | awk '{print "Tonsil_"$4"\t"$9}' | sort -k 1,1 | uniq | cut -f 1 | uniq -c >> gene_overlap_counts.txt
+
+
+
+sed 's/_superenhancer_[0-9]*//g' gene_overlap_counts.txt > gene_overlap_counts_list.txt
+
+sed -i 's/_SE_[0-9]*//g' gene_overlap_counts_list.txt
+
+sed -i 's/_heart/-heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/_chr[0-9]*//g' gene_overlap_counts_list.txt
+
+sed -i 's/X_[0-9]*_[0-9]*//g' gene_overlap_counts_list.txt
+
+sed -i 's/_[0-9]*_[0-9]*//g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhA1_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhA2_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhBiv_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhG1_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhG2_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_EnhWk_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_TssA_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_TssBiv_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_TssFlnkD_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_TssFlnk_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+sed -i 's/heart_TssFlnkU_lociStitched/heart/g' gene_overlap_counts_list.txt
+
+
+
+
+
+setwd("/Users/awilderman/Dropbox/Cotney_Lab/Manuscripts\ in\ preparation/Figure1-superenhancers_human/protein_coding_only_analysis")
+
+counts <- read.table("gene_overlap_counts_list.txt", header = FALSE)
+
+head(counts)
+
+library(ggplot2)
+
+counts <- as.data.frame(counts)
+
+p <- ggplot(counts, aes(x=V2, y=V1)) +
+
+geom_violin()
+
+
+
+pdf("counts_violin_all_tissues.pdf")
+
+p
+
+dev.off()
+
+
+
+library(dplyr)
+
+summary <- group_by(counts, V2) %>%
+
+summarise(count=n(), min = min (V1), max = max (V1), mean=mean(V1), median = median(V1), IQR = IQR(V1)) 
+
+write.table(summary, file="MultiTissue_SE_gene_overlap_stats.txt")
+
+
+
+
+
+# get the regions from each CF and heart sample that don't overlap protein-coding genes
+
+
+
+cd /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/protein_coding_only_analysis
+
+
+
+module load libpng/12-1.2.50-10
+
+module load BEDtools/2.29.0
+
+export EMMADIR=/home/FCAM/ewentworth/cotney/rawdata/chromatinsegmentations/superenhancers/human
+
+export HGBED=../gencode.v25lift37.annotation.noGL0_lv_1_2_protien_coding_only_sorted.bed
+
+
+
+bedtools intersect -a $EMMADIR/CS13-12383_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS13-12383_CF.txt
+
+bedtools intersect -a $EMMADIR/CS13-12690_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS13-12690_CF.txt
+
+bedtools intersect -a $EMMADIR/CS13-12829_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS13-12829_CF.txt
+
+bedtools intersect -a $EMMADIR/CS13-12830_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS13-12830_CF.txt
+
+bedtools intersect -a $EMMADIR/CS13-12877_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS13-12877_CF.txt
+
+bedtools intersect -a $EMMADIR/CS14-12408_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS14-12408_CF.txt
+
+bedtools intersect -a $EMMADIR/CS14-12709_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS14-12709_CF.txt
+
+bedtools intersect -a $EMMADIR/CS14-12913_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS14-12913_CF.txt
+
+bedtools intersect -a $EMMADIR/CS15-13000_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS15-13000_CF.txt
+
+bedtools intersect -a $EMMADIR/CS15-13019_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS15-13019_CF.txt
+
+bedtools intersect -a $EMMADIR/CS15-13128_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS15-13128_CF.txt
+
+bedtools intersect -a $EMMADIR/CS17-12191_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS17-12191_CF.txt
+
+bedtools intersect -a $EMMADIR/CS17-12331_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS17-12331_CF.txt
+
+bedtools intersect -a $EMMADIR/CS17-12341_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS17-12341_CF.txt
+
+bedtools intersect -a $EMMADIR/CS17-12611_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS17-12611_CF.txt
+
+bedtools intersect -a $EMMADIR/CS20-12104_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_CS20-12104_CF.txt
+
+bedtools intersect -a /home/FCAM/awilderman/ANALYSIS/ROSE/hg19/F2-N2108_CF_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_F2-N2108.txt
+
+bedtools intersect -a $EMMADIR/12383_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12383_heart.txt
+
+bedtools intersect -a $EMMADIR/12690_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12690_heart.txt
+
+bedtools intersect -a $EMMADIR/12408_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12408_heart.txt
+
+bedtools intersect -a $EMMADIR/14135_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_14135_heart.txt
+
+bedtools intersect -a $EMMADIR/12997_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12997_heart.txt
+
+bedtools intersect -a $EMMADIR/14315_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_14315_heart.txt
+
+bedtools intersect -a $EMMADIR/12291_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12291_heart.txt
+
+bedtools intersect -a $EMMADIR/12331_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12331_heart.txt
+
+bedtools intersect -a $EMMADIR/12059_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12059_heart.txt
+
+bedtools intersect -a $EMMADIR/12456_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12456_heart.txt
+
+bedtools intersect -a $EMMADIR/11914_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_11914_heart.txt
+
+bedtools intersect -a $EMMADIR/12135_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12135_heart.txt
+
+bedtools intersect -a $EMMADIR/12448_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12448_heart.txt
+
+bedtools intersect -a $EMMADIR/12451_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12451_heart.txt
+
+bedtools intersect -a $EMMADIR/11849_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_11849_heart.txt
+
+bedtools intersect -a $EMMADIR/12093_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12093_heart.txt
+
+bedtools intersect -a $EMMADIR/12058_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12058_heart.txt
+
+bedtools intersect -a $EMMADIR/12151_heart_superenhancer-sorted_SuperEnhancers.bed -b $HGBED -v > gene_non-overlap_12151_heart.txt
+
+
+
+cat gene_non-overlap_*_CF.txt > gene_non-overlap_all_CF.txt
+
+cat gene_non-overlap_*_heart.txt > gene_non-overlap_all_heart.txt
+
