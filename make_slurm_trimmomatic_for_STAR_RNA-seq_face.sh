@@ -27,18 +27,12 @@ AWIL083_m6-116-Het3_S2 \
 AWIL084_m7-117-KO1_S5 \
 AWIL085_m8-118-KO2_S1 \
 AWIL086_m9-119-KO3_S9 \
-Sample1_S1_R1 \
-Sample1_S1_R2 \
-Sample2_S2_R1 \
-Sample2_S2_R2 \
-Sample3_S3_R1 \
-Sample3_S3_R2 \
-Sample4_S4_R1 \
-Sample4_S4_R2 \
-Sample5_S5_R1 \
-Sample5_S5_R2 \
-Sample6_S6_R1 \
-Sample6_S6_R2 ;
+Sample1_S1 \
+Sample2_S2 \
+Sample3_S3 \
+Sample4_S4 \
+Sample5_S5 \
+Sample6_S6 ;
 do
    echo "java -jar \$TRIMDIR/trimmomatic-0.36.jar PE -phred33 \$SAMPLEDIR/"$face"_R1.fastq.gz \$SAMPLEDIR/"$face"_R2.fastq.gz 
 "$face"_forward_paired.fq.gz "$face"_forward_unpaired.fq.gz "$face"_reverse_paired.fq.gz "$face"_reverse_unpaired.fq.gz ILLUMI
