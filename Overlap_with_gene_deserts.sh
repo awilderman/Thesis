@@ -15,8 +15,10 @@ bedtools intersect -wa -wb -F 1 -a hg19_gene_desert.bed -b CF-specific_no_TSS_re
 
 # check that the ends of the gene desert are outside the ends of the SE
 cat hg19_gene_desert_intersect_with_CF-specific_noTSS.bed | awk '{print $2-$5"\t"$6-$3}' | more 
+cut -f 1-3 hg19_gene_desert_intersect_with_CF-specific_noTSS.bed > gene_deserts_with_CF-specific_noTSS_SEs.bed
 cut -f 4-6 hg19_gene_desert_intersect_with_CF-specific_noTSS.bed > CF-specific_noTSS_SEs_in_gene_deserts.bed
 
 # result is 77 CF-specific SEs with no TSS overlap that are contained within gene deserts
 
 # 3 # intersect those 77 regions with in vivo validated enhancers (from VISTA enhancer browser)
+# can also intersect the wider gene desert with VISTA enhancers
