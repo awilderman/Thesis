@@ -22,3 +22,11 @@ cut -f 4-6 hg19_gene_desert_intersect_with_CF-specific_noTSS.bed > CF-specific_n
 
 # 3 # intersect those 77 regions with in vivo validated enhancers (from VISTA enhancer browser)
 # can also intersect the wider gene desert with VISTA enhancers
+
+bedtools intersect -wa -wb -names CF Other -a CF-specific_noTSS_SEs_in_gene_deserts.bed -b /home/FCAM/awilderman/ANALYSIS/VISTA/hg19_cf_enhancer_track.bed -b /home/FCAM/awilderman/ANALYSIS/VISTA/hg19_other_enhancer_track.bed > CF-specific_SEs_in_Gene_deserts_VISTA_intersect.txt
+
+bedtools intersect -wa -wb -names CF Other -a gene_deserts_with_CF-specific_noTSS_SEs.bed -b /home/FCAM/awilderman/ANALYSIS/VISTA/hg19_cf_enhancer_track.bed -b /home/FCAM/awilderman/ANALYSIS/VISTA/hg19_other_enhancer_track.bed > Gene_deserts_with_CF-specific_SEs_VISTA_intersect.txt
+
+# note that the VISTA lists were made from human enhancers with positive activity in cf tissue or any other tissue and mouse enhancers (positive activity, CF or any other tissue) reciprocally lifted to hg19.
+
+ 
